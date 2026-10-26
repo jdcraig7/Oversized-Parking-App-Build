@@ -9,6 +9,7 @@ import { FREE_SAVED_LIMIT } from '../../config';
 import { evaluate } from '../../lib/search';
 import type { LatLng } from '../../lib/types';
 import { useAppState } from '../../state/AppState';
+import { useCommunity } from '../../state/Community';
 import { usePro } from '../../state/Pro';
 import { Button } from '../../ui/components';
 import { SpotCard } from '../../ui/SpotCard';
@@ -17,6 +18,7 @@ import { colors } from '../../ui/theme';
 export default function SavedScreen() {
   const { saved, settings, reports } = useAppState();
   const { isPro } = usePro();
+  const { summaries, load } = useCommunity();
   const [here, setHere] = useState<LatLng | null>(null);
 
   useEffect(() => {
@@ -26,12 +28,16 @@ export default function SavedScreen() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (saved.length) load(saved.map((s) => s.id));
+  }, [saved, load]);
+
   const results = useMemo(
     () =>
       saved.map((s) =>
-        evaluate(s, here ?? s, settings.vehicleMeters, settings.marginMeters, reports[s.id]),
+        evaluate(s, here ?? s, settings.vehicleMeters, settings.marginMeters, reports[s.id], summaries[s.id]),
       ),
-    [saved, here, settings.vehicleMeters, settings.marginMeters, reports],
+    [saved, here, settings.vehicleMeters, settings.marginMeters, reports, summaries],
   );
 
   return (

@@ -98,8 +98,8 @@ export default function SettingsScreen() {
       <SectionTitle>About</SectionTitle>
       <Card style={{ gap: 8 }}>
         <Text style={styles.body}>
-          Parking data comes from OpenStreetMap, built by volunteers. Coverage of clearances and prices varies by city. Your reports
-          and “Fix it on OpenStreetMap” edits make it better for every driver.
+          Parking data comes from OpenStreetMap, built by volunteers, plus clearances and prices reported by drivers like you.
+          Coverage varies by city. Every report and “Fix it on OpenStreetMap” edit makes it better for the next driver.
         </Text>
         <Text style={styles.body}>Always obey posted clearance signs. You are responsible for knowing your vehicle’s height.</Text>
         <Button title="Contact support" icon="mail-outline" variant="secondary" onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)} />

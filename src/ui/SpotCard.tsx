@@ -8,7 +8,7 @@ import { clearanceText, FeeBadge, FitBadge, KIND_ICONS } from './components';
 import { colors, radius } from './theme';
 
 export function SpotCard({ result, onPress }: { result: SpotResult; onPress: () => void }) {
-  const { spot, fit, clearance, distance } = result;
+  const { spot, fit, clearance, distance, price, driverReports } = result;
   return (
     <Pressable
       onPress={onPress}
@@ -29,14 +29,20 @@ export function SpotCard({ result, onPress }: { result: SpotResult; onPress: () 
         <Text style={styles.sub} numberOfLines={1}>
           {kindLabel(spot.kind)} · {clearanceText(clearance)}
         </Text>
-        {spot.price ? (
+        {price ? (
           <Text style={styles.price} numberOfLines={1}>
-            {spot.price}
+            {price}
           </Text>
         ) : null}
         <View style={styles.badges}>
           <FitBadge fit={fit} />
           <FeeBadge fee={spot.fee} />
+          {driverReports > 0 && (
+            <View style={styles.tag}>
+              <Ionicons name="people" size={12} color="#374151" />
+              <Text style={styles.tagText}>{driverReports}</Text>
+            </View>
+          )}
           {spot.hours === '24/7' && (
             <View style={styles.tag}>
               <Text style={styles.tagText}>24/7</Text>
@@ -74,6 +80,6 @@ const styles = StyleSheet.create({
   sub: { fontSize: 13, color: colors.muted },
   price: { fontSize: 13, color: colors.text, fontWeight: '600' },
   badges: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 2 },
-  tag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: '#F3F4F6' },
+  tag: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: '#F3F4F6' },
   tagText: { fontSize: 12, fontWeight: '700', color: '#374151' },
 });

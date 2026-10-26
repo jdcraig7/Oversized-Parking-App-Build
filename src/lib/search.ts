@@ -1,5 +1,6 @@
 // Filtering and sorting of search results. Pure functions, unit tested.
 
+import { resolveClearance, resolvePrice, type ClearanceSource, type CommunitySummary } from './community';
 import { distanceMeters } from './geo';
 import { checkFit, type Clearance, type FitResult } from './height';
 import type { LatLng, ParkingSpot, SpotReport } from './types';
@@ -32,8 +33,13 @@ export const DEFAULT_FILTERS: SearchFilters = {
 
 export interface SpotResult {
   spot: ParkingSpot;
-  /** The clearance actually used: a user's on-site report beats published data. */
+  /** The clearance actually used (see resolveClearance). */
   clearance: Clearance;
+  clearanceSource: ClearanceSource;
+  /** Best known price text, from you, other drivers, or the map. */
+  price?: string;
+  /** Number of shared driver reports for this spot. */
+  driverReports: number;
   fit: FitResult;
   distance: number;
 }
@@ -41,22 +47,21 @@ export interface SpotResult {
 const FIT_RANK: Record<FitResult['status'], number> = { fits: 0, tight: 1, unknown: 2, 'too-low': 3 };
 const FEE_RANK = { free: 0, unknown: 1, paid: 2 } as const;
 
-export function effectiveClearance(spot: ParkingSpot, report?: SpotReport): Clearance {
-  if (report?.clearanceMeters != null) return { status: 'limited', meters: report.clearanceMeters };
-  return spot.clearance;
-}
-
 export function evaluate(
   spot: ParkingSpot,
   origin: LatLng,
   vehicleMeters: number,
   marginMeters: number,
   report?: SpotReport,
+  community?: CommunitySummary,
 ): SpotResult {
-  const clearance = effectiveClearance(spot, report);
+  const { clearance, source } = resolveClearance(spot, report, community);
   return {
     spot,
     clearance,
+    clearanceSource: source,
+    price: resolvePrice(spot, report, community).price,
+    driverReports: community?.reportCount ?? 0,
     fit: checkFit(clearance, vehicleMeters, marginMeters),
     distance: distanceMeters(origin, spot),
   };

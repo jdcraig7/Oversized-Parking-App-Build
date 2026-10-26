@@ -6,12 +6,13 @@ import { Alert, Linking, Platform, ScrollView, Share, StyleSheet, Text, View } f
 import { onSpotViewed } from '../../ads/ads';
 import { AdBanner } from '../../ads/AdBanner';
 import { FREE_SAVED_LIMIT } from '../../config';
+import { resolveClearance, resolvePrice } from '../../lib/community';
 import { checkFit, describeFit, formatFeetInches } from '../../lib/height';
 import { kindLabel } from '../../lib/osm';
-import { effectiveClearance } from '../../lib/search';
 import type { ParkingSpot } from '../../lib/types';
 import { getCachedSpot } from '../../services/parkingApi';
 import { useAppState } from '../../state/AppState';
+import { useCommunity } from '../../state/Community';
 import { usePro } from '../../state/Pro';
 import { Button, Card, clearanceText, FeeBadge, FitBadge, InfoRow, KIND_ICONS, SectionTitle } from '../../ui/components';
 import { colors, fitColors } from '../../ui/theme';
@@ -27,6 +28,8 @@ export default function SpotScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { settings, saved, isSaved, save, unsave, reports } = useAppState();
   const { isPro } = usePro();
+  const community = useCommunity();
+  const { load: loadCommunity } = community;
   const spot: ParkingSpot | undefined = getCachedSpot(id) ?? saved.find((s) => s.id === id);
 
   useEffect(() => {
@@ -34,6 +37,10 @@ export default function SpotScreen() {
     // Count each opened spot once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    loadCommunity([id]);
+  }, [id, loadCommunity]);
 
   if (!spot) {
     return (
@@ -45,7 +52,9 @@ export default function SpotScreen() {
   }
 
   const report = reports[spot.id];
-  const clearance = effectiveClearance(spot, report);
+  const drivers = community.summaries[spot.id];
+  const { clearance, source } = resolveClearance(spot, report, drivers);
+  const price = resolvePrice(spot, report, drivers);
   const fit = checkFit(clearance, settings.vehicleMeters, settings.marginMeters);
   const fitStyle = fitColors[fit.status];
   const savedNow = isSaved(spot.id);
@@ -102,9 +111,11 @@ export default function SpotScreen() {
             <Measure label="Margin" value={formatFeetInches(settings.marginMeters)} />
           </View>
           <Text style={styles.verdictNote}>
-            {report?.clearanceMeters != null
+            {source === 'you'
               ? 'Using the clearance you reported.'
-              : clearance.status === 'open'
+              : source === 'drivers'
+                ? `Based on ${drivers?.clearanceReports} driver report${drivers?.clearanceReports === 1 ? '' : 's'} (median)${spot.clearance.status === 'limited' ? `. Map data says ${formatFeetInches(spot.clearance.meters)}; we use the lower value` : ''}.`
+                : clearance.status === 'open'
                 ? 'Open-air parking: nothing overhead is recorded. Watch for entry barriers, trees and wires.'
                 : clearance.status === 'unknown'
                   ? 'No clearance is published for this structure. Look for the sign at the entrance before you pull in.'
@@ -123,7 +134,17 @@ export default function SpotScreen() {
           <View style={{ paddingBottom: 4 }}>
             <FeeBadge fee={spot.fee} />
           </View>
-          <InfoRow icon="cash-outline" label="Rates" value={report?.price ? `${report.price} (your report)` : spot.price ?? (spot.fee === 'free' ? 'Free' : 'Rates not published. Check signs on site.')} />
+          <InfoRow
+            icon="cash-outline"
+            label="Rates"
+            value={
+              price.price
+                ? `${price.price}${price.source === 'you' ? ' (your report)' : price.source === 'drivers' ? ` (reported by a driver${drivers?.latestPriceAt ? ` ${new Date(drivers.latestPriceAt).toLocaleDateString()}` : ''})` : ''}`
+                : spot.fee === 'free'
+                  ? 'Free'
+                  : 'Rates not published. Check signs on site.'
+            }
+          />
           <InfoRow icon="time-outline" label="Fees charged" value={spot.feeHours} />
           <InfoRow icon="calendar-outline" label="Open hours" value={spot.hours ?? 'Not published'} />
           <InfoRow icon="hourglass-outline" label="Max stay" value={spot.maxStay} />
@@ -143,9 +164,30 @@ export default function SpotScreen() {
           {spot.website && <Button title="Website" icon="globe-outline" variant="secondary" onPress={() => Linking.openURL(spot.website!)} style={{ marginTop: 8 }} />}
         </Card>
 
+        {drivers && (
+          <>
+            <SectionTitle>Driver reports</SectionTitle>
+            <Card>
+              <InfoRow icon="people-outline" label="Reports" value={`${drivers.reportCount} · last ${new Date(drivers.lastReportAt).toLocaleDateString()}`} />
+              <InfoRow
+                icon="resize-outline"
+                label="Reported clearance"
+                value={drivers.medianClearanceMeters != null ? `${formatFeetInches(drivers.medianClearanceMeters)} (median of ${drivers.clearanceReports})` : undefined}
+              />
+              {drivers.recentNotes.length > 0 && (
+                <InfoRow icon="chatbubbles-outline" label="Recent notes" value={drivers.recentNotes.map((n) => `“${n}”`).join('\n')} />
+              )}
+            </Card>
+          </>
+        )}
+
         <SectionTitle>Help other drivers</SectionTitle>
         <Card style={{ gap: 10 }}>
-          <Text style={styles.body}>See a different clearance sign or price? Save what you saw — the app will use it for this spot.</Text>
+          <Text style={styles.body}>
+            {community.enabled
+              ? 'See a different clearance sign or price? Report what you saw to help every driver who comes after you.'
+              : 'See a different clearance sign or price? Save what you saw — the app will use it for this spot.'}
+          </Text>
           <Button title={report ? 'Edit my report' : 'Report clearance or price'} icon="create-outline" variant="secondary" onPress={() => router.push({ pathname: '/report/[id]', params: { id: spot.id } })} />
           <Button title="Fix it on OpenStreetMap" icon="open-outline" variant="secondary" onPress={() => Linking.openURL(spot.sourceUrl)} />
         </Card>

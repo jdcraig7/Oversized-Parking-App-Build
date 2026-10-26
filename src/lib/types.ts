@@ -63,5 +63,7 @@ export interface SpotReport {
   clearanceMeters?: number;
   price?: string;
   note?: string;
+  /** Also shared with other drivers (when shared reports are set up). */
+  shared?: boolean;
   updatedAt: string;
 }

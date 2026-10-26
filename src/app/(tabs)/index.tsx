@@ -25,6 +25,7 @@ import type { LatLng, ParkingSpot } from '../../lib/types';
 import { searchPlaces, type Place } from '../../services/geocode';
 import { searchParking } from '../../services/parkingApi';
 import { useAppState } from '../../state/AppState';
+import { useCommunity } from '../../state/Community';
 import { Button, Chip } from '../../ui/components';
 import { SpotCard } from '../../ui/SpotCard';
 import { colors, fitColors, radius } from '../../ui/theme';
@@ -40,6 +41,8 @@ const NO_SPOTS: ParkingSpot[] = [];
 export default function SearchScreen() {
   const { settings, updateSettings, reports } = useAppState();
   const { filters } = settings;
+  const community = useCommunity();
+  const { load: loadCommunity } = community;
 
   const [query, setQuery] = useState('');
   const [places, setPlaces] = useState<Place[] | null>(null);
@@ -81,6 +84,11 @@ export default function SearchScreen() {
       alive = false;
     };
   }, [center, radiusMeters, refreshCount, searchKey]);
+
+  // Pull shared driver reports for whatever we found.
+  useEffect(() => {
+    if (spots.length) loadCommunity(spots.map((s) => s.id));
+  }, [spots, loadCommunity]);
 
   const runSearch = useCallback((point: LatLng, label: string) => {
     setMapCenter(null);
@@ -165,10 +173,10 @@ export default function SearchScreen() {
   const results = useMemo(() => {
     if (!center) return [];
     const evaluated = spots.map((s) =>
-      evaluate(s, center, settings.vehicleMeters, settings.marginMeters, reports[s.id]),
+      evaluate(s, center, settings.vehicleMeters, settings.marginMeters, reports[s.id], community.summaries[s.id]),
     );
     return applyFilters(evaluated, filters);
-  }, [spots, center, settings.vehicleMeters, settings.marginMeters, reports, filters]);
+  }, [spots, center, settings.vehicleMeters, settings.marginMeters, reports, community.summaries, filters]);
 
   const stats = useMemo(() => summarize(results), [results]);
   const selected = results.find((r) => r.spot.id === selectedId);

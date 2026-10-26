@@ -17,8 +17,17 @@ export const OVERPASS_URLS = (env.EXPO_PUBLIC_OVERPASS_URLS ?? 'https://overpass
   .map((u) => u.trim())
   .filter(Boolean);
 
-/** Nominatim-compatible geocoder. Swap for a commercial geocoder at scale. */
-export const GEOCODER_URL = env.EXPO_PUBLIC_GEOCODER_URL ?? 'https://nominatim.openstreetmap.org/search';
+/**
+ * City/address search uses the phone's built-in geocoder (free). Set this to a
+ * Nominatim-compatible server (e.g. LocationIQ) to use that instead.
+ */
+export const CUSTOM_GEOCODER_URL = env.EXPO_PUBLIC_GEOCODER_URL;
+/** Public OpenStreetMap geocoder, used only when the phone's geocoder finds nothing. */
+export const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
+
+/** Supabase project for shared driver reports. Leave unset to keep reports on-device only. */
+export const SUPABASE_URL = env.EXPO_PUBLIC_SUPABASE_URL;
+export const SUPABASE_ANON_KEY = env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 // --- Monetization -----------------------------------------------------------
 

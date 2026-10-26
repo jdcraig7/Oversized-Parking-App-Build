@@ -51,6 +51,23 @@ describe('applyFilters', () => {
       updatedAt: '2026-01-01',
     });
     assert.equal(reported.fit.status, 'fits');
+    assert.equal(reported.clearanceSource, 'you');
+  });
+
+  it('applies shared driver reports and counts them', () => {
+    const r = evaluate(spots[3], origin, truck, margin, undefined, {
+      spotId: spots[3].id,
+      reportCount: 4,
+      clearanceReports: 4,
+      medianClearanceMeters: 2.1,
+      latestPrice: '$8 flat',
+      recentNotes: [],
+      lastReportAt: '2026-10-01',
+    });
+    assert.equal(r.fit.status, 'too-low');
+    assert.equal(r.clearanceSource, 'drivers');
+    assert.equal(r.driverReports, 4);
+    assert.equal(r.price, '$8 flat');
   });
 });
 

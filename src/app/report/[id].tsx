@@ -6,6 +6,7 @@ import { feetInchesToMeters } from '../../lib/height';
 import type { ParkingSpot } from '../../lib/types';
 import { getCachedSpot } from '../../services/parkingApi';
 import { useAppState } from '../../state/AppState';
+import { useCommunity } from '../../state/Community';
 import { Button, Card, SectionTitle } from '../../ui/components';
 import { HeightPicker } from '../../ui/HeightPicker';
 import { colors, radius } from '../../ui/theme';
@@ -13,6 +14,7 @@ import { colors, radius } from '../../ui/theme';
 export default function ReportScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { saved, reports, saveReport, deleteReport } = useAppState();
+  const community = useCommunity();
   const spot: ParkingSpot | undefined = getCachedSpot(id) ?? saved.find((s) => s.id === id);
   const existing = reports[id];
 
@@ -22,15 +24,29 @@ export default function ReportScreen() {
   const [clearance, setClearance] = useState(startHeight);
   const [price, setPrice] = useState(existing?.price ?? '');
   const [note, setNote] = useState(existing?.note ?? '');
+  const [shared, setShared] = useState(existing?.shared ?? true);
+
+  // Network work runs in the background; reports made offline are queued and sent later.
+  const syncInBackground = (work: Promise<void>) => work.catch((e) => console.warn('Report sync failed', e));
 
   const submit = () => {
-    saveReport({
+    const report = {
       spotId: id,
       clearanceMeters: hasClearance ? clearance : undefined,
       price: price.trim() || undefined,
       note: note.trim() || undefined,
+      shared: community.enabled && shared,
       updatedAt: new Date().toISOString(),
-    });
+    };
+    saveReport(report);
+    if (report.shared) syncInBackground(community.share(report));
+    else if (existing?.shared) syncInBackground(community.unshare(id));
+    router.back();
+  };
+
+  const remove = () => {
+    deleteReport(id);
+    if (existing?.shared) syncInBackground(community.unshare(id));
     router.back();
   };
 
@@ -38,7 +54,9 @@ export default function ReportScreen() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {spot && <Text style={styles.title}>{spot.name}</Text>}
-        <Text style={styles.body}>Enter what the signs on site say. This is saved on your phone and used whenever you view this spot.</Text>
+        <Text style={styles.body}>
+          Enter what the signs on site say. The app uses your report whenever you view this spot.
+        </Text>
 
         <SectionTitle>Posted clearance</SectionTitle>
         <Card style={{ gap: 12 }}>
@@ -62,15 +80,24 @@ export default function ReportScreen() {
           multiline
         />
 
+        {community.enabled && (
+          <Card style={{ gap: 6, marginTop: 24 }}>
+            <View style={styles.switchRow}>
+              <Text style={styles.label}>Share with other drivers</Text>
+              <Switch value={shared} onValueChange={setShared} />
+            </View>
+            <Text style={styles.hint}>
+              Shared anonymously. Notes are public, so don&apos;t include personal info. Works offline: we&apos;ll send it when you have signal.
+            </Text>
+          </Card>
+        )}
+
         <Button title="Save report" icon="checkmark" onPress={submit} style={{ marginTop: 24 }} />
         {existing && (
           <Button
             title="Delete my report"
             variant="secondary"
-            onPress={() => {
-              deleteReport(id);
-              router.back();
-            }}
+            onPress={remove}
             style={{ marginTop: 8 }}
           />
         )}
@@ -85,6 +112,7 @@ const styles = StyleSheet.create({
   body: { fontSize: 15, color: colors.muted, lineHeight: 21 },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   label: { fontSize: 16, color: colors.text, fontWeight: '600' },
+  hint: { fontSize: 13, color: colors.muted, lineHeight: 18 },
   input: {
     backgroundColor: colors.card,
     borderRadius: radius,
