@@ -5,12 +5,13 @@ import { Alert, Linking, Platform, ScrollView, Share, StyleSheet, Text, View } f
 
 import { onSpotViewed } from '../../ads/ads';
 import { AdBanner } from '../../ads/AdBanner';
-import { FREE_SAVED_LIMIT } from '../../config';
+import { FREE_SAVED_LIMIT, SHOW_SPONSORS_TO_PRO } from '../../config';
 import { resolveClearance, resolvePrice } from '../../lib/community';
 import { checkFit, describeFit, formatFeetInches } from '../../lib/height';
 import { kindLabel } from '../../lib/osm';
 import type { ParkingSpot } from '../../lib/types';
 import { getCachedSpot } from '../../services/parkingApi';
+import { getCachedListing, listingForSpot } from '../../services/sponsors';
 import { useAppState } from '../../state/AppState';
 import { useCommunity } from '../../state/Community';
 import { usePro } from '../../state/Pro';
@@ -58,6 +59,14 @@ export default function SpotScreen() {
   const fit = checkFit(clearance, settings.vehicleMeters, settings.marginMeters);
   const fitStyle = fitColors[fit.status];
   const savedNow = isSaved(spot.id);
+  // A place that only exists as a sponsor listing (not in the map data).
+  const sponsorOnly = spot.id.startsWith('sponsor:');
+  const sponsor =
+    !isPro || SHOW_SPONSORS_TO_PRO
+      ? sponsorOnly
+        ? getCachedListing(spot.id.slice('sponsor:'.length))
+        : listingForSpot(spot.id)
+      : undefined;
 
   const toggleSave = () => {
     if (savedNow) return unsave(spot.id);
@@ -100,6 +109,21 @@ export default function SpotScreen() {
             <Text style={styles.subtitle}>{kindLabel(spot.kind)}{spot.address ? ` · ${spot.address}` : ''}</Text>
           </View>
         </View>
+
+        {sponsor && (
+          <Card style={styles.sponsor}>
+            <View style={styles.sponsorLabel}>
+              <Text style={styles.sponsorLabelText}>Sponsored</Text>
+            </View>
+            {!!sponsor.tagline && <Text style={styles.body}>{sponsor.tagline}</Text>}
+            {!!sponsor.offer && (
+              <View style={styles.sponsorOffer}>
+                <Ionicons name="pricetag" size={16} color={colors.sponsor} />
+                <Text style={styles.sponsorOfferText}>{sponsor.offer}</Text>
+              </View>
+            )}
+          </Card>
+        )}
 
         {/* The answer to "will my truck fit?" */}
         <Card style={[styles.verdict, { backgroundColor: fitStyle.bg, borderColor: fitStyle.pin }]}>
@@ -181,19 +205,25 @@ export default function SpotScreen() {
           </>
         )}
 
-        <SectionTitle>Help other drivers</SectionTitle>
-        <Card style={{ gap: 10 }}>
-          <Text style={styles.body}>
-            {community.enabled
-              ? 'See a different clearance sign or price? Report what you saw to help every driver who comes after you.'
-              : 'See a different clearance sign or price? Save what you saw — the app will use it for this spot.'}
-          </Text>
-          <Button title={report ? 'Edit my report' : 'Report clearance or price'} icon="create-outline" variant="secondary" onPress={() => router.push({ pathname: '/report/[id]', params: { id: spot.id } })} />
-          <Button title="Fix it on OpenStreetMap" icon="open-outline" variant="secondary" onPress={() => Linking.openURL(spot.sourceUrl)} />
-        </Card>
+        {!sponsorOnly && (
+          <>
+            <SectionTitle>Help other drivers</SectionTitle>
+            <Card style={{ gap: 10 }}>
+              <Text style={styles.body}>
+                {community.enabled
+                  ? 'See a different clearance sign or price? Report what you saw to help every driver who comes after you.'
+                  : 'See a different clearance sign or price? Save what you saw — the app will use it for this spot.'}
+              </Text>
+              <Button title={report ? 'Edit my report' : 'Report clearance or price'} icon="create-outline" variant="secondary" onPress={() => router.push({ pathname: '/report/[id]', params: { id: spot.id } })} />
+              <Button title="Fix it on OpenStreetMap" icon="open-outline" variant="secondary" onPress={() => Linking.openURL(spot.sourceUrl)} />
+            </Card>
+          </>
+        )}
 
         <Text style={styles.footnote}>
-          Data © OpenStreetMap contributors, fetched {new Date(spot.fetchedAt).toLocaleDateString()}. Always obey posted clearance signs; information may be out of date.
+          {sponsorOnly
+            ? 'Details provided by the sponsor. Always obey posted clearance signs.'
+            : `Data © OpenStreetMap contributors, fetched ${new Date(spot.fetchedAt).toLocaleDateString()}. Always obey posted clearance signs; information may be out of date.`}
         </Text>
       </ScrollView>
       <AdBanner />
@@ -225,6 +255,11 @@ const styles = StyleSheet.create({
   measureLabel: { fontSize: 11, fontWeight: '700', color: colors.muted, textTransform: 'uppercase' },
   actions: { flexDirection: 'row', gap: 8, marginTop: 12 },
   body: { fontSize: 15, color: colors.text, lineHeight: 21 },
+  sponsor: { gap: 8, marginBottom: 12, backgroundColor: colors.sponsorBg, borderColor: '#DDD6FE' },
+  sponsorLabel: { alignSelf: 'flex-start', backgroundColor: colors.sponsor, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
+  sponsorLabelText: { color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.4, textTransform: 'uppercase' },
+  sponsorOffer: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  sponsorOfferText: { flex: 1, fontSize: 15, fontWeight: '700', color: colors.sponsor },
   footnote: { fontSize: 12, color: colors.muted, textAlign: 'center', marginTop: 20, lineHeight: 17 },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 },
   missingText: { fontSize: 16, color: colors.text, textAlign: 'center' },

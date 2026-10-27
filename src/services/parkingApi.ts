@@ -13,6 +13,11 @@ export function getCachedSpot(id: string): ParkingSpot | undefined {
   return spotIndex.get(id);
 }
 
+/** Makes a spot that didn't come from a search (e.g. a sponsor's) openable by id. */
+export function cacheSpot(spot: ParkingSpot) {
+  spotIndex.set(spot.id, spot);
+}
+
 function cacheKey({ latitude, longitude }: LatLng, radius: number) {
   // ~100 m buckets so tiny map nudges reuse the same results.
   return `${latitude.toFixed(3)},${longitude.toFixed(3)},${Math.round(radius)}`;

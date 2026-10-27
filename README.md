@@ -60,6 +60,43 @@ How it's protected:
 - To remove spam, open **Table Editor → spot_reports** and set `hidden` to `true`. The row drops out of all summaries.
 - Run the security tests against a local Postgres any time with `PGUSER=postgres supabase/tests/run.sh`.
 
+## Sponsored listings
+
+Sell featured placements to local businesses (truck stops, garages with tall clearance, RV parks, lift and tire shops). Each search shows **at most one** sponsored listing, labeled "Sponsored", at the top of the list and as a purple pin on the map.
+
+Rules built into the app:
+- A sponsored **parking spot** only appears when the driver's vehicle **fits with their safety margin**, judged by the lower of the sponsor's claimed clearance and what the map data and driver reports say. A sponsor can never put a too-low, tight, or unknown-clearance spot in front of a driver.
+- A sponsored **business** (not parking) appears as a card with its offer, address, hours, phone and website.
+- Pro users don't see sponsors, because Pro promises no ads. Change `SHOW_SPONSORS_TO_PRO` in `src/config.ts` if you decide otherwise.
+
+**Set up once:** run [`supabase/migrations/20261027000000_sponsored_listings.sql`](supabase/migrations/20261027000000_sponsored_listings.sql) in the Supabase SQL Editor (after the reports migration).
+
+**Add a sponsor:** Supabase → Table Editor → `sponsored_listings` → Insert row:
+
+| Field | What to enter |
+|---|---|
+| `sponsor_name` | Who pays (for your records; never shown) |
+| `kind` | `spot` for parking, `business` for anything else |
+| `title`, `tagline`, `offer`, `category` | What drivers see, e.g. "Acme Tall Garage", "8'2\" clearance, 40 oversized spaces", "First hour free" |
+| `latitude`, `longitude` | The location (right-click it in Google Maps to copy) |
+| `clearance_m` or `open_air` | Required for `spot`. Meters: 8'2" = 2.49. Verify it yourself; don't take the sponsor's word. |
+| `spot_id` | Optional: the OpenStreetMap id (e.g. `osm:way/123456`) if the garage is already in the app, so it isn't listed twice |
+| `target_radius_m` | How far away a search can be and still show it (16000 ≈ 10 miles) |
+| `starts_on`, `ends_on` | The paid period; it switches off by itself afterwards |
+| `weight` | When several sponsors cover one area, a sponsor with weight 2 shows twice as often as weight 1 |
+| `active` | Untick to pause |
+
+**Monthly report for each sponsor** (SQL Editor):
+
+```sql
+select l.sponsor_name, l.title, date_trunc('month', s.day)::date as month,
+       sum(s.views) as views, sum(s.taps) as taps
+from sponsor_stats s join sponsored_listings l on l.id = s.listing_id
+group by 1, 2, 3 order by 3 desc, 1;
+```
+
+A view is counted once per search the listing appears in; a tap is a press on the listing, its call, website or directions buttons.
+
 ## Hosting and costs
 
 The app itself is installed from the App Store and Google Play, so there's no website to host. The only server pieces are the database for shared reports and, once you have real traffic, the parking data. Prices below were checked in October 2026 and change often, so confirm them on each provider's pricing page.
@@ -135,6 +172,7 @@ src/
     (tabs)/settings.tsx Vehicle height, margin, radius, purchases, about
     spot/[id].tsx      Spot details and "will it fit?" verdict
     report/[id].tsx    Report clearance / price seen on site (shared or private)
+    sponsor/[id].tsx   Sponsored business details
     upgrade.tsx        Pro paywall
     onboarding.tsx     First-run vehicle height setup
   lib/                 Pure logic, unit tested (no React Native imports)
@@ -142,9 +180,10 @@ src/
     osm.ts             OpenStreetMap → ParkingSpot
     search.ts          Filters and sorting
     community.ts       Combining your, other drivers' and map data
+    sponsors.ts        Choosing which sponsored listing to show
   services/            Network: parking data, place search, shared reports (Supabase)
   state/               App settings, saved spots, reports, driver summaries, Pro status
-supabase/              Database schema and security tests for shared reports
+supabase/              Database schema and tests for shared reports and sponsors
   ads/                 AdMob banner and occasional full-screen ad
   ui/                  Shared components and theme
 tests/                 Node test runner tests for src/lib

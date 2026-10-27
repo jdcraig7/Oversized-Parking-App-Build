@@ -10,6 +10,9 @@ export const colors = {
   primaryText: '#FFFFFF',
   accent: '#F59E0B',
   danger: '#B91C1C',
+  /** Sponsored placements: distinct from fit colors so an ad never looks like a verdict. */
+  sponsor: '#7C3AED',
+  sponsorBg: '#F5F3FF',
 };
 
 /** Colors for each fit status. Shapes/labels always accompany color for accessibility. */

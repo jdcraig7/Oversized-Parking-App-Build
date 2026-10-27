@@ -7,5 +7,8 @@ cd "$(dirname "$0")/.."
 DB=${DB:-spot_reports_test}
 dropdb --if-exists "$DB" && createdb "$DB"
 cat tests/supabase_shim.sql migrations/*.sql | psql -q -v ON_ERROR_STOP=1 -d "$DB"
-psql -q -d "$DB" < tests/rls_test.sql
+for t in tests/*_test.sql; do
+  echo "=== $t"
+  psql -q -d "$DB" < "$t"
+done
 dropdb "$DB"

@@ -33,6 +33,7 @@ export default function RootLayout() {
             >
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="spot/[id]" options={{ title: 'Parking details', headerBackTitle: 'Back' }} />
+              <Stack.Screen name="sponsor/[id]" options={{ title: 'Sponsored', headerBackTitle: 'Back' }} />
               <Stack.Screen name="report/[id]" options={{ title: 'Report what you saw', presentation: 'modal' }} />
               <Stack.Screen name="upgrade" options={{ title: 'Go Pro', presentation: 'modal' }} />
               <Stack.Screen name="onboarding" options={{ headerShown: false, presentation: 'modal', gestureEnabled: false }} />

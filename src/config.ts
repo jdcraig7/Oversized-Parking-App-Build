@@ -58,6 +58,12 @@ export const AD_UNITS = {
   }),
 };
 
+/**
+ * Sponsored listings are ads, and Pro promises "no ads", so Pro users don't
+ * see them. Flip this if you decide featured listings should reach everyone.
+ */
+export const SHOW_SPONSORS_TO_PRO = false;
+
 /** Show a full-screen ad at most once per this many spot detail views... */
 export const INTERSTITIAL_EVERY_N_VIEWS = 6;
 /** ...and never more often than this. */

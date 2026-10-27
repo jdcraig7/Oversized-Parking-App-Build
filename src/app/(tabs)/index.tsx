@@ -18,15 +18,20 @@ import MapView, { Marker, PROVIDER_GOOGLE, type Region } from 'react-native-maps
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AdBanner } from '../../ads/AdBanner';
+import { SHOW_SPONSORS_TO_PRO } from '../../config';
 import { distanceMeters, isInUnitedStates, METERS_PER_MILE } from '../../lib/geo';
 import { formatFeetInches } from '../../lib/height';
 import { applyFilters, evaluate, summarize, type SearchFilters, type SortOrder } from '../../lib/search';
+import { listingToSpot, pickSponsored, sponsorSpotId, type SponsoredListing, type SponsorPick } from '../../lib/sponsors';
 import type { LatLng, ParkingSpot } from '../../lib/types';
 import { searchPlaces, type Place } from '../../services/geocode';
-import { searchParking } from '../../services/parkingApi';
+import { cacheSpot, searchParking } from '../../services/parkingApi';
+import { fetchSponsored, recordSponsorEvent, sponsorsEnabled } from '../../services/sponsors';
 import { useAppState } from '../../state/AppState';
 import { useCommunity } from '../../state/Community';
+import { usePro } from '../../state/Pro';
 import { Button, Chip } from '../../ui/components';
+import { SponsoredCard } from '../../ui/SponsoredCard';
 import { SpotCard } from '../../ui/SpotCard';
 import { colors, fitColors, radius } from '../../ui/theme';
 
@@ -37,12 +42,17 @@ const SORT_LABELS: Record<SortOrder, string> = {
 };
 const SORT_CYCLE: SortOrder[] = ['distance', 'best-fit', 'free-first'];
 const NO_SPOTS: ParkingSpot[] = [];
+const NO_LISTINGS: SponsoredListing[] = [];
+/** Map selection id for the sponsored pin. */
+const SPONSOR_SELECTED = '__sponsor__';
 
 export default function SearchScreen() {
   const { settings, updateSettings, reports } = useAppState();
   const { filters } = settings;
   const community = useCommunity();
   const { load: loadCommunity } = community;
+  const { isPro } = usePro();
+  const showSponsors = sponsorsEnabled && (!isPro || SHOW_SPONSORS_TO_PRO);
 
   const [query, setQuery] = useState('');
   const [places, setPlaces] = useState<Place[] | null>(null);
@@ -60,6 +70,7 @@ export default function SearchScreen() {
   const [locating, setLocating] = useState(false);
   // Problems that happen before a search starts (no location, outside the US).
   const [notice, setNotice] = useState<string | null>(null);
+  const [sponsored, setSponsored] = useState<{ key: string; listings: SponsoredListing[] }>({ key: '', listings: [] });
 
   const [mode, setMode] = useState<'list' | 'map'>('list');
   const [mapCenter, setMapCenter] = useState<LatLng | null>(null);
@@ -84,6 +95,18 @@ export default function SearchScreen() {
       alive = false;
     };
   }, [center, radiusMeters, refreshCount, searchKey]);
+
+  // Sponsors targeting this area (never blocks or breaks the search).
+  const centerKey = center ? `${center.latitude},${center.longitude}` : '';
+  useEffect(() => {
+    if (!center || !showSponsors) return;
+    let alive = true;
+    fetchSponsored(center).then((listings) => alive && setSponsored({ key: centerKey, listings }));
+    return () => {
+      alive = false;
+    };
+  }, [center, centerKey, showSponsors]);
+  const listings = showSponsors && sponsored.key === centerKey ? sponsored.listings : NO_LISTINGS;
 
   // Pull shared driver reports for whatever we found.
   useEffect(() => {
@@ -170,18 +193,61 @@ export default function SearchScreen() {
 
   const setFilter = (patch: Partial<SearchFilters>) => updateSettings({ filters: { ...filters, ...patch } });
 
-  const results = useMemo(() => {
+  const evaluated = useMemo(() => {
     if (!center) return [];
-    const evaluated = spots.map((s) =>
+    return spots.map((s) =>
       evaluate(s, center, settings.vehicleMeters, settings.marginMeters, reports[s.id], community.summaries[s.id]),
     );
-    return applyFilters(evaluated, filters);
-  }, [spots, center, settings.vehicleMeters, settings.marginMeters, reports, community.summaries, filters]);
+  }, [spots, center, settings.vehicleMeters, settings.marginMeters, reports, community.summaries]);
+
+  // At most one sponsor per search, and only parking the vehicle fits (see pickSponsored).
+  const pick: SponsorPick | null = useMemo(
+    () =>
+      loading || listings.length === 0
+        ? null
+        : pickSponsored(listings, evaluated, settings.vehicleMeters, settings.marginMeters, searchKey),
+    [loading, listings, evaluated, settings.vehicleMeters, settings.marginMeters, searchKey],
+  );
+
+  // The promoted spot appears once, in the sponsored slot, not again in the list.
+  const results = useMemo(() => {
+    const promoted = pick?.result?.spot.id;
+    return applyFilters(promoted ? evaluated.filter((r) => r.spot.id !== promoted) : [...evaluated], filters);
+  }, [evaluated, filters, pick]);
 
   const stats = useMemo(() => summarize(results), [results]);
   const selected = results.find((r) => r.spot.id === selectedId);
 
   const openSpot = (id: string) => router.push({ pathname: '/spot/[id]', params: { id } });
+
+  // Count one view per search the sponsor appears in.
+  const pickedId = pick?.listing.id;
+  useEffect(() => {
+    if (pickedId) recordSponsorEvent(pickedId, 'view');
+  }, [pickedId, searchKey]);
+
+  const openSponsor = (p: SponsorPick) => {
+    recordSponsorEvent(p.listing.id, 'tap');
+    if (p.listing.kind === 'business') {
+      router.push({ pathname: '/sponsor/[id]', params: { id: p.listing.id } });
+    } else if (p.result) {
+      openSpot(p.result.spot.id);
+    } else {
+      cacheSpot(listingToSpot(p.listing));
+      openSpot(sponsorSpotId(p.listing.id));
+    }
+  };
+
+  const sponsoredCard = (p: SponsorPick) =>
+    center ? (
+      <SponsoredCard
+        pick={p}
+        origin={center}
+        vehicleMeters={settings.vehicleMeters}
+        marginMeters={settings.marginMeters}
+        onPress={() => openSponsor(p)}
+      />
+    ) : undefined;
 
   const showSearchHere = mode === 'map' && !!center && !!mapCenter && distanceMeters(center, mapCenter) > radiusMeters * 0.3;
 
@@ -299,6 +365,7 @@ export default function SearchScreen() {
             keyExtractor={(r) => r.spot.id}
             contentContainerStyle={{ padding: 12, gap: 10, paddingBottom: 24 }}
             renderItem={({ item }) => <SpotCard result={item} onPress={() => openSpot(item.spot.id)} />}
+            ListHeaderComponent={pick ? sponsoredCard(pick) : undefined}
             refreshing={loading}
             onRefresh={() => setRefreshCount((n) => n + 1)}
             ListEmptyComponent={
@@ -347,6 +414,18 @@ export default function SearchScreen() {
                   }}
                 />
               ))}
+              {pick && (
+                <Marker
+                  key={`sponsor-${pick.listing.id}`}
+                  coordinate={pick.listing}
+                  pinColor={colors.sponsor}
+                  tracksViewChanges={false}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    setSelectedId(SPONSOR_SELECTED);
+                  }}
+                />
+              )}
             </MapView>
             {showSearchHere && (
               <Pressable style={styles.searchHere} onPress={() => mapCenter && runSearch(mapCenter, 'This area')}>
@@ -355,6 +434,7 @@ export default function SearchScreen() {
               </Pressable>
             )}
             {loading && <ActivityIndicator style={styles.mapSpinner} size="large" />}
+            {pick && selectedId === SPONSOR_SELECTED && <View style={styles.mapCard}>{sponsoredCard(pick)}</View>}
             {selected && (
               <View style={styles.mapCard}>
                 <SpotCard result={selected} onPress={() => openSpot(selected.spot.id)} />
