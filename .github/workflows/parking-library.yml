@@ -1,6 +1,7 @@
-# Builds our parking library from OpenStreetMap and publishes it to
-# Cloudflare Workers + KV (free tier). Runs weekly, on demand, and when the
-# builder changes.
+# Builds the whole-US parking library from OpenStreetMap (scripts/update-library.sh)
+# and publishes it to Cloudflare Workers + KV (free tier). Runs on demand and
+# when the builder changes. The weekly refresh runs as a scheduled Claude task
+# that calls the same script, so this workflow has no schedule of its own.
 #
 # Publishing needs two repository secrets (Settings > Secrets and variables > Actions):
 #   CLOUDFLARE_API_TOKEN   token with "Workers Scripts: Edit" and "Workers KV Storage: Edit"
@@ -10,12 +11,12 @@
 name: Parking library
 
 on:
-  schedule:
-    - cron: '17 9 * * 1' # Mondays 09:17 UTC
   workflow_dispatch:
   push:
     paths:
       - 'scripts/build-parking-library.*'
+      - 'scripts/update-library.sh'
+      - 'scripts/library-bundles.ts'
       - 'src/lib/tiles.ts'
       - 'src/lib/osm.ts'
       - 'library-worker/**'
@@ -29,10 +30,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    env:
-      # Regions from download.openstreetmap.fr/extracts/north-america/. Add more as the library grows.
-      REGIONS: us-west/california
-      OUT: parking-library
     steps:
       - uses: actions/checkout@v4
 
@@ -49,16 +46,8 @@ jobs:
 
       - name: Build library
         run: |
-          set -euo pipefail
-          for region in $REGIONS; do
-            file="$RUNNER_TEMP/$(basename "$region").osm.pbf"
-            base="https://download.openstreetmap.fr/extracts/north-america/$region.osm.pbf"
-            curl -sSfL --retry 5 --retry-delay 10 -o "$file" "$base"
-            echo "$(curl -sSfL "$base.md5" | cut -d' ' -f1)  $file" | md5sum -c -
-            scripts/build-parking-library.sh "$file" "$OUT"
-            rm "$file"
-          done
-          du -sh "$OUT"
+          DEPLOY=0 scripts/update-library.sh "$RUNNER_TEMP/library-work"
+          du -sh "$RUNNER_TEMP/library-work/library"
 
       - name: Publish to Cloudflare
         env:
@@ -69,4 +58,4 @@ jobs:
             echo "::warning::Cloudflare secrets are not set yet, so the library was built but not published."
             exit 0
           fi
-          npx tsx scripts/deploy-parking-library.ts "$OUT"
+          npx tsx scripts/deploy-parking-library.ts "$RUNNER_TEMP/library-work/library"

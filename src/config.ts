@@ -78,5 +78,5 @@ export const INTERSTITIAL_EVERY_N_VIEWS = 6;
 /** ...and never more often than this. */
 export const INTERSTITIAL_MIN_INTERVAL_MS = 4 * 60 * 1000;
 
-export const PRIVACY_POLICY_URL = env.EXPO_PUBLIC_PRIVACY_POLICY_URL ?? 'https://example.com/privacy';
+export const PRIVACY_POLICY_URL = env.EXPO_PUBLIC_PRIVACY_POLICY_URL ?? `${PARKING_LIBRARY_URL}/privacy`;
 export const SUPPORT_EMAIL = env.EXPO_PUBLIC_CONTACT_EMAIL ?? 'support@example.com';

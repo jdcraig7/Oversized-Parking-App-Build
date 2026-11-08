@@ -1,19 +1,25 @@
 // Publishes a built parking library to Cloudflare (free tier): tiles go into
 // a KV namespace and library-worker/worker.js serves them on workers.dev.
 //
-//   CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... npx tsx scripts/deploy-parking-library.ts parking-library/
+//   CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... npx tsx scripts/deploy-parking-library.ts parking-library/ [--dry-run]
 //
-// Token needs Workers Scripts: Edit and Workers KV Storage: Edit. Only files
-// that changed since the last deploy are written (KV free tier: 1,000 writes/day).
+// Token needs Workers Scripts: Edit and Workers KV Storage: Edit. Tiles are
+// packed into bundles and only changed bundles are written (KV free tier:
+// 1,000 writes/day; MAX_WRITES caps one run, default 900).
 
-import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
+
+import type { LibraryManifest } from '../src/lib/tiles';
+import { bundleKeyOf, makeBundles } from './library-bundles';
 
 const NAME = 'oversized-parking-library';
 const account = process.env.CLOUDFLARE_ACCOUNT_ID;
 const token = process.env.CLOUDFLARE_API_TOKEN;
 const dir = process.argv[2];
+const DRY_RUN = process.argv.includes('--dry-run');
+const MAX_WRITES = Number(process.env.MAX_WRITES ?? 900);
+const MAX_DELETES = 900;
 if (!account || !token || !dir) {
   console.error('usage: CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... deploy-parking-library.ts <library-dir>');
   process.exit(2);
@@ -46,42 +52,88 @@ async function main() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: NAME }),
     }));
+  const kv = `/storage/kv/namespaces/${ns.id}`;
+  const read = (key: string) =>
+    fetch(`${api}${kv}/values/${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${token}` } }).then((r) =>
+      r.ok ? r.text() : null,
+    );
 
-  // 2. Write only changed files; a hash index in KV remembers what's there.
-  const indexKey = '_hashes.json';
-  const old: Record<string, string> = await fetch(`${api}/storage/kv/namespaces/${ns.id}/values/${indexKey}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  }).then((r) => (r.ok ? r.json() : {}));
-  const all = files(dir).map((f) => {
-    const value = readFileSync(f, 'utf8');
-    return { key: relative(dir, f).split('\\').join('/'), value, hash: createHash('sha1').update(value).digest('hex') };
-  });
-  // A tile that changed is written under "<key>@<hash>" (a new key, so edge
-  // caches can't serve the old one; see library-worker/worker.js). Tiles go
-  // first and the manifest last, so the app never sees a manifest listing
-  // tiles that aren't there yet.
-  const changed = all.filter((f) => old[f.key] !== f.hash);
-  const tileWrites = changed
-    .filter((f) => f.key !== 'manifest.json')
-    .map(({ key, value, hash }) => ({ key: old[key] ? `${key}@${hash.slice(0, 16)}` : key, value }));
-  const manifestChanged = changed.some((f) => f.key === 'manifest.json');
-  for (let i = 0; i < tileWrites.length; i += 5000) {
-    await cf(`/storage/kv/namespaces/${ns.id}/bulk`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(tileWrites.slice(i, i + 5000)),
-    });
+  // 2. Pack tiles into bundles; write only bundles that changed (KV free
+  // tier: 1,000 writes/day, so at most MAX_WRITES per run; the rest go out on
+  // the next run and the manifest keeps their old version until then).
+  const tileFiles = new Map(files(dir).map((f) => [relative(dir, f).split('\\').join('/'), readFileSync(f, 'utf8')]));
+  const built = JSON.parse(tileFiles.get('manifest.json') ?? 'null') as LibraryManifest | null;
+  if (!built) throw new Error(`${dir}/manifest.json missing`);
+  const bundles = makeBundles(tileFiles);
+  const published: Record<string, string> = JSON.parse((await read('_bundles.json')) ?? '{}');
+  const oldManifest = JSON.parse((await read('manifest.json')) ?? 'null') as LibraryManifest | null;
+  // New areas first, then updates.
+  const changed = [...bundles.entries()]
+    .filter(([b, x]) => published[b] !== x.hash)
+    .sort(([a], [b]) => Number(a in published) - Number(b in published));
+  const toWrite = changed.slice(0, MAX_WRITES);
+  console.log(`bundles: ${bundles.size}, changed: ${changed.length}, writing now: ${toWrite.length}`);
+  if (DRY_RUN) return;
+
+  let batch: { key: string; value: string; base64: true }[] = [];
+  let size = 0;
+  const flush = async () => {
+    if (batch.length) await cf(`${kv}/bulk`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(batch) });
+    batch = [];
+    size = 0;
+  };
+  for (const [b, x] of toWrite) {
+    const value = x.data.toString('base64');
+    if (size + value.length > 40_000_000) await flush();
+    batch.push({ key: `b/${b}@${x.hash}`, value, base64: true });
+    size += value.length;
   }
+  await flush();
+  const replaced = toWrite.filter(([b]) => published[b]).map(([b]) => `b/${b}@${published[b]}`);
+  for (const [b, x] of toWrite) published[b] = x.hash;
+
+  // The manifest lists each tile with its bundle's hash. Tiles of bundles not
+  // written yet keep their entry from the live manifest.
+  const manifest: LibraryManifest = { ...built, tiles: {}, hashes: {} };
+  for (const [b, x] of bundles) {
+    if (published[b] === x.hash) {
+      for (const t of x.tiles) {
+        manifest.tiles[t] = built.tiles[t];
+        manifest.hashes![t] = x.hash;
+      }
+    } else if (oldManifest) {
+      // Not written yet: keep serving what's live (an older bundle, or tiles
+      // stored one per key from before bundles).
+      for (const [t, n] of Object.entries(oldManifest.tiles)) {
+        if (bundleKeyOf(t) === b) {
+          manifest.tiles[t] = n;
+          const h = published[b] ?? oldManifest.hashes?.[t];
+          if (h) manifest.hashes![t] = h;
+        }
+      }
+    }
+  }
+  manifest.total = Object.values(manifest.tiles).reduce((a, n) => a + n, 0);
   const finalWrites = [
-    ...(manifestChanged ? [{ key: 'manifest.json', value: readFileSync(join(dir, 'manifest.json'), 'utf8') }] : []),
-    { key: indexKey, value: JSON.stringify(Object.fromEntries(all.map((f) => [f.key, f.hash]))) },
+    { key: '_bundles.json', value: JSON.stringify(published) },
+    { key: 'manifest.json', value: JSON.stringify(manifest) },
   ];
-  await cf(`/storage/kv/namespaces/${ns.id}/bulk`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(finalWrites),
-  });
-  console.log(`KV: ${tileWrites.length} changed tiles written${manifestChanged ? ', manifest updated' : ''} (${tileWrites.length + finalWrites.length} writes)`);
+  const privacy = readFileSync(new URL('../library-worker/privacy.html', import.meta.url), 'utf8');
+  if ((await read('site/privacy.html')) !== privacy) finalWrites.push({ key: 'site/privacy.html', value: privacy });
+  await cf(`${kv}/bulk`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(finalWrites) });
+  console.log(`KV: ${toWrite.length} bundles written, ${toWrite.length + finalWrites.length} writes; library total ${manifest.total}`);
+  if (changed.length > toWrite.length) console.log(`${changed.length - toWrite.length} bundles left for the next run (daily write limit)`);
+
+  // Old bundle versions and pre-bundle tile keys are deleted (deletes have
+  // their own 1,000/day allowance). Phones still holding an old manifest get
+  // the current bundle (see worker.js).
+  const allWritten = changed.length === toWrite.length;
+  const legacy = allWritten ? (await cf<{ name: string }[]>(`${kv}/keys?prefix=v1/&limit=1000`)).map((k) => k.name) : [];
+  const deletes = [...replaced, ...legacy, ...(allWritten ? ['_hashes.json'] : [])].slice(0, MAX_DELETES);
+  if (deletes.length) {
+    await cf(`${kv}/bulk`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(deletes) });
+    console.log(`KV: ${deletes.length} old keys deleted`);
+  }
 
   // 3. The Worker that serves them.
   const form = new FormData();

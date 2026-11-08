@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 
 import { parseOverpass } from '../src/lib/osm';
 import {
+  BUNDLE_TILES,
   elementsWithin,
   isLibraryCandidate,
   planTiles,
@@ -104,5 +105,33 @@ describe('osmium id mapping', () => {
     assert.deepEqual(osmIdOf('a3463091'), ['r', 1731545]); // Mickey and Friends Parking Structure
     assert.equal(osmIdOf('a8682344'), null); // way 4341172 again, as an area
     assert.equal(osmIdOf('x1'), null);
+  });
+});
+
+describe('bundles', () => {
+  it('packs tiles so the worker can slice any one back out', async () => {
+    const { makeBundles, bundleKeyOf } = await import('../scripts/library-bundles');
+    const worker = await import('../library-worker/worker.js');
+    const a = JSON.stringify({ v: 1, updated: 'x', records: [['w', 1, 34.1, -118.2, { name: 'Café ✓' }]] });
+    const b = JSON.stringify({ v: 1, updated: 'x', records: [] });
+    const bundles = makeBundles(
+      new Map([
+        ['v1/136/-474.json', a],
+        ['v1/137/-473.json', b],
+        ['v1/144/-474.json', b],
+        ['manifest.json', '{}'],
+      ]),
+    );
+    assert.equal(bundleKeyOf('136/-474'), '17/-60');
+    assert.equal(worker.bundleKeyOf(136, -474), '17/-60');
+    assert.equal(worker.BUNDLE, BUNDLE_TILES);
+    assert.deepEqual([...bundles.keys()].sort(), ['17/-60', '18/-60']);
+    const first = bundles.get('17/-60')!;
+    assert.deepEqual(first.tiles.sort(), ['136/-474', '137/-473']);
+    assert.match(first.hash, /^[0-9a-f]{16}$/);
+    const ab = first.data.buffer.slice(first.data.byteOffset, first.data.byteOffset + first.data.length);
+    assert.equal(new TextDecoder().decode(worker.tileFromBundle(ab, '136/-474')!), a);
+    assert.equal(new TextDecoder().decode(worker.tileFromBundle(ab, '137/-473')!), b);
+    assert.equal(worker.tileFromBundle(ab, '144/-474'), null);
   });
 });

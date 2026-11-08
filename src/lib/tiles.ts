@@ -25,7 +25,13 @@ export interface ParkingTile {
   records: TileRecord[];
 }
 
-export const tileIndex = (degrees: number) => Math.floor(degrees / TILE_DEGREES);
+/**
+ * The host stores tiles in bundles of BUNDLE_TILES x BUNDLE_TILES (see
+ * library-worker/worker.js); a tile's manifest hash is its bundle's hash.
+ */
+export const BUNDLE_TILES = 8;
+
+export const tileIndex =(degrees: number) => Math.floor(degrees / TILE_DEGREES);
 export const tileKey = (latIdx: number, lonIdx: number) => `${latIdx}/${lonIdx}`;
 export const tilePath = (key: string) => `v${TILE_FORMAT_VERSION}/${key}.json`;
 /**
