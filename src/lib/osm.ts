@@ -5,7 +5,8 @@ import { parseHeight, type Clearance } from './height';
 import type { AccessLevel, FeeStatus, ParkingSpot, ResearchNote, SpotKind } from './types';
 
 export interface OverpassElement {
-  type: 'node' | 'way' | 'relation';
+  /** OpenStreetMap types, or 'place' for a garage from our own research. */
+  type: 'node' | 'way' | 'relation' | 'place';
   id: number;
   lat?: number;
   lon?: number;
@@ -223,7 +224,7 @@ export function elementToSpot(el: OverpassElement, fetchedAt: string): ParkingSp
   const givenName = tags.name ?? tags.brand ?? tags.operator;
 
   return {
-    id: `osm:${el.type}/${el.id}`,
+    id: el.type === 'place' ? `research:place/${el.id}` : `osm:${el.type}/${el.id}`,
     name: givenName ?? kindLabel(kind),
     unnamed: !givenName,
     kind,
@@ -249,7 +250,7 @@ export function elementToSpot(el: OverpassElement, fetchedAt: string): ParkingSp
     amenities: amenitiesFor(kind, tags),
     description: tags.description,
     research: researchFor(tags),
-    sourceUrl: `https://www.openstreetmap.org/${el.type}/${el.id}`,
+    sourceUrl: el.type === 'place' ? (tags['research:url'] ?? '') : `https://www.openstreetmap.org/${el.type}/${el.id}`,
     fetchedAt,
   };
 }

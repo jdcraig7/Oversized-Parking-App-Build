@@ -254,7 +254,11 @@ export default function SpotScreen() {
                   : 'See a different clearance sign or price? Save what you saw — the app will use it for this spot.'}
               </Text>
               <Button title={report ? 'Edit my report' : 'Report clearance or price'} icon="create-outline" variant="secondary" onPress={() => router.push({ pathname: '/report/[id]', params: { id: spot.id } })} />
-              <Button title="Fix it on OpenStreetMap" icon="open-outline" variant="secondary" onPress={() => Linking.openURL(spot.sourceUrl)} />
+              {spot.id.startsWith('osm:') ? (
+                <Button title="Fix it on OpenStreetMap" icon="open-outline" variant="secondary" onPress={() => Linking.openURL(spot.sourceUrl)} />
+              ) : !!spot.sourceUrl && (
+                <Button title="View our source" icon="open-outline" variant="secondary" onPress={() => Linking.openURL(spot.sourceUrl)} />
+              )}
             </Card>
           </>
         )}

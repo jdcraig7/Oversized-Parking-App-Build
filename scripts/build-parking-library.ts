@@ -107,12 +107,53 @@ export function parseCsv(text: string): Record<string, string>[] {
   return body.map((r) => Object.fromEntries(header.map((h, i) => [h.trim(), (r[i] ?? '').trim()])));
 }
 
+const PLACE_KINDS: Record<string, Record<string, string>> = {
+  garage: { parking: 'multi-storey' },
+  underground: { parking: 'underground' },
+  rooftop: { parking: 'rooftop' },
+  surface: { parking: 'surface' },
+  truck: { hgv: 'designated' },
+};
+
+/**
+ * Places from research/places.csv: real parking that OpenStreetMap doesn't
+ * have yet. Each row's numeric id must stay the same forever (it's the spot id
+ * people save and report against).
+ */
+export function researchPlaces(file: string): TileRecord[] {
+  if (!existsSync(file)) return [];
+  return parseCsv(readFileSync(file, 'utf8')).map((row) => {
+    const id = Number(row.id);
+    const lat = Number(row.lat);
+    const lon = Number(row.lon);
+    if (!Number.isInteger(id) || id <= 0) throw new Error(`places.csv: bad id "${row.id}"`);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error(`places.csv ${id}: bad coordinates`);
+    if (!PLACE_KINDS[row.kind]) throw new Error(`places.csv ${id}: kind must be ${Object.keys(PLACE_KINDS).join(', ')}`);
+    if (!['sign', 'operator', 'listing'].includes(row.source)) throw new Error(`places.csv ${id}: source must be sign, operator or listing`);
+    if (row.clearance && parseHeight(row.clearance).kind !== 'meters') throw new Error(`places.csv ${id}: can't read clearance "${row.clearance}"`);
+    const tags: Record<string, string> = { amenity: 'parking', ...PLACE_KINDS[row.kind], name: row.name, 'research:source': row.source };
+    const put = (k: string, v?: string) => {
+      if (v) tags[k] = v;
+    };
+    put('maxheight', row.clearance);
+    put('charge', row.price);
+    put('fee', row.price ? 'yes' : undefined);
+    put('opening_hours', row.hours);
+    put('access', row.access);
+    put('operator', row.operator);
+    put('research:url', row.source_url);
+    put('research:checked', row.checked);
+    put('research:note', row.note);
+    return ['p', id, lat, lon, tags] as TileRecord;
+  });
+}
+
 /** Merges research/*.csv into the tile records. Returns [applied, not found]. */
 function applyResearch(records: Map<string, TileRecord>, dir: string): [number, string[]] {
   if (!existsSync(dir)) return [0, []];
   let applied = 0;
   const missing: string[] = [];
-  for (const file of readdirSync(dir).filter((f) => f.endsWith('.csv'))) {
+  for (const file of readdirSync(dir).filter((f) => f.endsWith('.csv') && f !== 'places.csv')) {
     for (const row of parseCsv(readFileSync(join(dir, file), 'utf8'))) {
       const m = /^(node|way|relation)\/(\d+)$/.exec(row.osm_id ?? '');
       if (!m) throw new Error(`${file}: bad osm_id "${row.osm_id}"`);
@@ -142,6 +183,20 @@ function applyResearch(records: Map<string, TileRecord>, dir: string): [number, 
   return [applied, missing];
 }
 
+/**
+ * osmium export ids: n123 (node), w123 (way, as a line), and a<N> for areas,
+ * where an even N is a way (N/2, already exported as w...) and an odd N is a
+ * relation ((N-1)/2). Multipolygon parking (often the biggest garages and
+ * lots) only arrives as an odd area id, so those must not be skipped.
+ */
+export function osmIdOf(id: string): ['n' | 'w' | 'r', number] | null {
+  const m = /^([nwa])(\d+)$/.exec(id);
+  if (!m) return null;
+  const n = Number(m[2]);
+  if (m[1] !== 'a') return [m[1] as 'n' | 'w', n];
+  return n % 2 === 1 ? ['r', (n - 1) / 2] : null;
+}
+
 async function main() {
   const [input, outDir, updated] = process.argv.slice(2);
   if (!input || !outDir || !updated) {
@@ -152,6 +207,7 @@ async function main() {
   const tiles = new Map<string, Map<string, TileRecord>>();
   let read = 0;
   let kept = 0;
+  const bounds = { minLat: Infinity, maxLat: -Infinity, minLon: Infinity, maxLon: -Infinity };
 
   const lines = createInterface({ input: createReadStream(input), crlfDelay: Infinity });
   for await (const raw of lines) {
@@ -162,12 +218,11 @@ async function main() {
     const tags = f.properties ?? {};
     if (!isLibraryCandidate(tags)) continue;
     const center = centerOf(f.geometry);
-    // osmium ids look like n123 / w123 / r123 (areas built from ways or relations).
-    const m = /^([nwr])(\d+)$/.exec(f.id ?? '');
-    if (!center || !m) continue;
+    const osm = osmIdOf(f.id ?? '');
+    if (!center || !osm) continue;
     const record: TileRecord = [
-      m[1] as TileRecord[0],
-      Number(m[2]),
+      osm[0],
+      osm[1],
       Math.round(center[1] * 1e5) / 1e5,
       Math.round(center[0] * 1e5) / 1e5,
       slimTags(tags),
@@ -177,13 +232,32 @@ async function main() {
     const key = tileKeyFor({ latitude: record[2], longitude: record[3] });
     if (!tiles.has(key)) tiles.set(key, new Map());
     tiles.get(key)!.set(`${record[0]}${record[1]}`, record);
+    bounds.minLat = Math.min(bounds.minLat, record[2]);
+    bounds.maxLat = Math.max(bounds.maxLat, record[2]);
+    bounds.minLon = Math.min(bounds.minLon, record[3]);
+    bounds.maxLon = Math.max(bounds.maxLon, record[3]);
     kept++;
   }
+
+  // Places from our own research that OpenStreetMap doesn't have, kept to
+  // this region's bounding box (so a later region doesn't re-add them).
+  const researchDir = join(dirname(new URL(import.meta.url).pathname), '..', 'research');
+  let placesAdded = 0;
+  if (bounds.minLat <= bounds.maxLat) {
+    for (const record of researchPlaces(join(researchDir, 'places.csv'))) {
+      if (record[2] < bounds.minLat || record[2] > bounds.maxLat || record[3] < bounds.minLon || record[3] > bounds.maxLon) continue;
+      const key = tileKeyFor({ latitude: record[2], longitude: record[3] });
+      if (!tiles.has(key)) tiles.set(key, new Map());
+      tiles.get(key)!.set(`p${record[1]}`, record);
+      placesAdded++;
+    }
+  }
+  console.log(`research places added: ${placesAdded}`);
 
   // Our own research (research/*.csv) fills in clearances and prices.
   const byId = new Map<string, TileRecord>();
   for (const records of tiles.values()) for (const [id, r] of records) byId.set(id, r);
-  const [applied, missing] = applyResearch(byId, join(dirname(new URL(import.meta.url).pathname), '..', 'research'));
+  const [applied, missing] = applyResearch(byId, researchDir);
   console.log(`research rows applied: ${applied}${missing.length ? `, not in this region: ${missing.length}` : ''}`);
 
   // Merge with tiles already in the output (from another region), then write.

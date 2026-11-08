@@ -11,8 +11,12 @@ export const TILE_FORMAT_VERSION = 1;
 /** Tile size in degrees: ~17 x 14 miles in the continental US. */
 export const TILE_DEGREES = 0.25;
 
-/** A parking place as stored in a tile: [type, osm id, lat, lon, tags]. */
-export type TileRecord = ['n' | 'w' | 'r', number, number, number, Record<string, string>];
+/**
+ * A parking place as stored in a tile: [type, id, lat, lon, tags]. Types n/w/r
+ * are OpenStreetMap nodes/ways/relations; p is a place from our own research
+ * (research/places.csv) that OpenStreetMap doesn't have.
+ */
+export type TileRecord = ['n' | 'w' | 'r' | 'p', number, number, number, Record<string, string>];
 
 export interface ParkingTile {
   v: number;
@@ -69,7 +73,7 @@ export function planTiles(manifest: LibraryManifest, keys: string[]): { covered:
   return { covered: fetch.length > 0, fetch };
 }
 
-const TYPES = { n: 'node', w: 'way', r: 'relation' } as const;
+const TYPES = { n: 'node', w: 'way', r: 'relation', p: 'place' } as const;
 
 export function recordToElement([t, id, lat, lon, tags]: TileRecord): OverpassElement {
   return { type: TYPES[t], id, lat, lon, tags };

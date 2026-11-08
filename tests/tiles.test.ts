@@ -95,3 +95,14 @@ describe('research sheet', () => {
     ]);
   });
 });
+
+describe('osmium id mapping', () => {
+  it('keeps nodes, ways and relation areas, and drops way areas (duplicates)', async () => {
+    const { osmIdOf } = await import('../scripts/build-parking-library');
+    assert.deepEqual(osmIdOf('n35677198'), ['n', 35677198]);
+    assert.deepEqual(osmIdOf('w4341172'), ['w', 4341172]);
+    assert.deepEqual(osmIdOf('a3463091'), ['r', 1731545]); // Mickey and Friends Parking Structure
+    assert.equal(osmIdOf('a8682344'), null); // way 4341172 again, as an area
+    assert.equal(osmIdOf('x1'), null);
+  });
+});
