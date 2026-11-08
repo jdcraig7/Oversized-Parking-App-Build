@@ -1,5 +1,5 @@
 import { OVERPASS_URLS, USER_AGENT } from '../config';
-import { buildParkingQuery, parseOverpass, type OverpassResponse } from '../lib/osm';
+import { buildParkingQuery, overpassFailure, parseOverpass, type OverpassResponse } from '../lib/osm';
 import type { LatLng, ParkingSpot } from '../lib/types';
 
 const CACHE_TTL_MS = 30 * 60 * 1000;
@@ -35,9 +35,22 @@ async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Pro
 
 export class ParkingSearchError extends Error {}
 
+/** Give up on a server that hasn't answered after this long and try the next one. */
+const SERVER_TIMEOUT_MS = 12000;
+/**
+ * Public Overpass servers ban clients that keep querying after being told to
+ * slow down (HTTP 429) or refused (403/406), so such a server rests for a while.
+ */
+const REST_AFTER_REFUSAL_MS = 2 * 60 * 1000;
+const restingUntil = new Map<string, number>();
+
+const hostOf = (url: string) => url.replace(/^https?:\/\//, '').split('/')[0];
+
 /**
  * Finds parking within `radiusMeters` of `center`. Tries each Overpass server in turn.
  * Results are cached briefly; pass `force` to skip the cache (pull to refresh).
+ * On failure the error message says what each server did, so problems on a
+ * phone can be diagnosed from a screenshot.
  */
 export async function searchParking(
   center: LatLng,
@@ -49,8 +62,13 @@ export async function searchParking(
   if (!force && hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.spots;
 
   const body = `data=${encodeURIComponent(buildParkingQuery(center.latitude, center.longitude, radiusMeters))}`;
-  let lastError: unknown;
+  const problems: string[] = [];
   for (const url of OVERPASS_URLS) {
+    const host = hostOf(url);
+    if ((restingUntil.get(url) ?? 0) > Date.now()) {
+      problems.push(`${host}: paused after it asked us to slow down`);
+      continue;
+    }
     try {
       const res = await fetchWithTimeout(
         url,
@@ -59,18 +77,36 @@ export async function searchParking(
           headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': USER_AGENT },
           body,
         },
-        30000,
+        SERVER_TIMEOUT_MS,
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const spots = parseOverpass((await res.json()) as OverpassResponse);
+      if (res.status === 429 || res.status === 403 || res.status === 406) {
+        restingUntil.set(url, Date.now() + REST_AFTER_REFUSAL_MS);
+        problems.push(`${host}: refused (HTTP ${res.status})`);
+        continue;
+      }
+      if (!res.ok) {
+        problems.push(`${host}: HTTP ${res.status}`);
+        continue;
+      }
+      const json = (await res.json()) as OverpassResponse;
+      const failure = overpassFailure(json);
+      if (failure) {
+        // Partial results would silently hide garages, so treat them as a failure.
+        problems.push(`${host}: ${failure}`);
+        continue;
+      }
+      const spots = parseOverpass(json);
       for (const s of spots) spotIndex.set(s.id, s);
       cache.set(key, { at: Date.now(), spots });
       if (cache.size > MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value!);
       return spots;
     } catch (e) {
-      lastError = e;
+      const timedOut = e instanceof Error && e.name === 'AbortError';
+      problems.push(`${host}: ${timedOut ? `no answer in ${SERVER_TIMEOUT_MS / 1000}s` : 'could not connect'}`);
     }
   }
-  console.warn('Parking search failed', lastError);
-  throw new ParkingSearchError("Couldn't load parking right now. Check your connection and try again.");
+  console.warn('Parking search failed', problems);
+  throw new ParkingSearchError(
+    `The parking map servers aren't responding right now. Please try again in a minute.\n\nDetails: ${problems.join(' · ')}`,
+  );
 }

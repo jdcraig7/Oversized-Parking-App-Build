@@ -15,6 +15,22 @@ export interface OverpassElement {
 
 export interface OverpassResponse {
   elements: OverpassElement[];
+  /** Set by the server when a query ran into trouble, e.g. "runtime error: Query timed out". */
+  remark?: string;
+}
+
+/**
+ * Returns a short reason when an HTTP 200 response is really a failure. Overpass
+ * reports timeouts and memory limits in `remark` and may return partial
+ * results, which would hide parking that exists.
+ */
+export function overpassFailure(response: OverpassResponse): string | null {
+  if (!response || !Array.isArray(response.elements)) return 'unexpected response';
+  const remark = response.remark ?? '';
+  if (/runtime (error|remark)|timed out|out of memory/i.test(remark)) {
+    return /timed out/i.test(remark) ? 'server busy (query timed out)' : 'server error';
+  }
+  return null;
 }
 
 /**

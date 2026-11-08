@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { buildParkingQuery, parseOverpass, type OverpassResponse } from '../src/lib/osm';
+import { buildParkingQuery, overpassFailure, parseOverpass, type OverpassResponse } from '../src/lib/osm';
 
 // Shapes and tag values mirror real Overpass `out center tags` output.
 const fixture: OverpassResponse = {
@@ -130,5 +130,21 @@ describe('buildParkingQuery', () => {
     assert.match(q, /nwr\["amenity"="parking"\]\["access"!~"\^\(private\|no\|delivery\)\$"\]\(around:8047,39\.73920,-104\.99030\)/);
     assert.match(q, /\["amenity"="fuel"\]\["hgv"~/);
     assert.match(q, /out center tags;/);
+  });
+});
+
+describe('overpassFailure', () => {
+  it('passes normal responses', () => {
+    assert.equal(overpassFailure({ elements: [] }), null);
+    assert.equal(overpassFailure({ elements: [], remark: 'some harmless note' }), null);
+  });
+
+  it('flags timeouts and server errors reported inside a 200 response', () => {
+    assert.equal(
+      overpassFailure({ elements: [], remark: 'runtime error: Query timed out in "query" at line 3 after 26 seconds.' }),
+      'server busy (query timed out)',
+    );
+    assert.equal(overpassFailure({ elements: [], remark: 'runtime error: Query run out of memory using about 2048 MB of RAM.' }), 'server error');
+    assert.equal(overpassFailure({} as never), 'unexpected response');
   });
 });

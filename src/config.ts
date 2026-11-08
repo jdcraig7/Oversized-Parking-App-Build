@@ -12,7 +12,7 @@ export const APP_NAME = 'Oversized Parking';
 export const USER_AGENT = `OversizedParkingApp/${Constants.expoConfig?.version ?? '1.0.0'} (${env.EXPO_PUBLIC_CONTACT_EMAIL ?? 'support@example.com'})`;
 
 /** Overpass servers to try in order. Point the first one at your own server for production. */
-export const OVERPASS_URLS = (env.EXPO_PUBLIC_OVERPASS_URLS ?? 'https://overpass-api.de/api/interpreter,https://overpass.kumi.systems/api/interpreter')
+export const OVERPASS_URLS = (env.EXPO_PUBLIC_OVERPASS_URLS ?? 'https://overpass-api.de/api/interpreter,https://overpass.private.coffee/api/interpreter,https://overpass.kumi.systems/api/interpreter')
   .split(',')
   .map((u) => u.trim())
   .filter(Boolean);

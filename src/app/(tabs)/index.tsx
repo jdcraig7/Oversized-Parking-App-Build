@@ -203,10 +203,11 @@ export default function SearchScreen() {
   // At most one sponsor per search, and only parking the vehicle fits (see pickSponsored).
   const pick: SponsorPick | null = useMemo(
     () =>
-      loading || listings.length === 0
+      // No sponsor on a failed search: an ad above an error message looks broken.
+      loading || error || listings.length === 0
         ? null
         : pickSponsored(listings, evaluated, settings.vehicleMeters, settings.marginMeters, searchKey),
-    [loading, listings, evaluated, settings.vehicleMeters, settings.marginMeters, searchKey],
+    [loading, error, listings, evaluated, settings.vehicleMeters, settings.marginMeters, searchKey],
   );
 
   // The promoted spot appears once, in the sponsored slot, not again in the list.
@@ -375,6 +376,7 @@ export default function SearchScreen() {
                   <Text style={styles.emptyText}>
                     {error ?? 'Try a bigger search radius in Vehicle settings, or turn off a filter.'}
                   </Text>
+                  {!!error && <Button title="Try again" icon="refresh" onPress={() => setRefreshCount((n) => n + 1)} />}
                   {!error && settings.radiusMiles < 10 && (
                     <Button title="Search a wider area" variant="secondary" onPress={() => updateSettings({ radiusMiles: Math.min(10, settings.radiusMiles * 2) })} />
                   )}
@@ -434,6 +436,13 @@ export default function SearchScreen() {
               </Pressable>
             )}
             {loading && <ActivityIndicator style={styles.mapSpinner} size="large" />}
+            {!loading && !!error && (
+              <View style={styles.mapError}>
+                <Text style={styles.mapErrorTitle}>Couldn&apos;t load parking</Text>
+                <Text style={styles.mapErrorText}>{error}</Text>
+                <Button title="Try again" icon="refresh" onPress={() => setRefreshCount((n) => n + 1)} />
+              </View>
+            )}
             {pick && selectedId === SPONSOR_SELECTED && <View style={styles.mapCard}>{sponsoredCard(pick)}</View>}
             {selected && (
               <View style={styles.mapCard}>
@@ -516,4 +525,18 @@ const styles = StyleSheet.create({
   searchHereText: { color: colors.primaryText, fontWeight: '700' },
   mapSpinner: { position: 'absolute', top: '45%', alignSelf: 'center' },
   mapCard: { position: 'absolute', left: 12, right: 12, bottom: 12 },
+  mapError: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    top: 60,
+    gap: 8,
+    padding: 16,
+    borderRadius: radius,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  mapErrorTitle: { fontSize: 17, fontWeight: '800', color: colors.text },
+  mapErrorText: { fontSize: 13, color: colors.muted, lineHeight: 18 },
 });
