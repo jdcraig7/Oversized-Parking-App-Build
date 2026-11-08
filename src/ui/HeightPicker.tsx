@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { feetInchesToMeters, formatFeetInches, metersToTotalInches } from '../lib/height';
 import { presetMeters, VEHICLE_PRESETS } from '../lib/vehicles';
@@ -52,16 +52,20 @@ export function HeightPicker({
 }
 
 function Stepper({ label, value, onMinus, onPlus }: { label: string; value: number; onMinus: () => void; onPlus: () => void }) {
+  // Small phones (e.g. 320pt wide) get slightly smaller buttons so nothing crowds the number.
+  const compact = useWindowDimensions().width < 360;
+  const btn = [styles.stepBtn, compact && styles.stepBtnCompact];
+  const icon = compact ? 22 : 26;
   return (
     <View style={styles.stepper}>
       <Text style={styles.stepLabel}>{label}</Text>
       <View style={styles.stepRow}>
-        <Pressable onPress={onMinus} style={styles.stepBtn} accessibilityRole="button" accessibilityLabel={`Decrease ${label}`} hitSlop={8}>
-          <Ionicons name="remove" size={26} color={colors.primary} />
+        <Pressable onPress={onMinus} style={btn} accessibilityRole="button" accessibilityLabel={`Decrease ${label}`} hitSlop={8}>
+          <Ionicons name="remove" size={icon} color={colors.primary} />
         </Pressable>
-        <Text style={styles.stepValue}>{value}</Text>
-        <Pressable onPress={onPlus} style={styles.stepBtn} accessibilityRole="button" accessibilityLabel={`Increase ${label}`} hitSlop={8}>
-          <Ionicons name="add" size={26} color={colors.primary} />
+        <Text style={[styles.stepValue, compact && styles.stepValueCompact]}>{value}</Text>
+        <Pressable onPress={onPlus} style={btn} accessibilityRole="button" accessibilityLabel={`Increase ${label}`} hitSlop={8}>
+          <Ionicons name="add" size={icon} color={colors.primary} />
         </Pressable>
       </View>
     </View>
@@ -70,11 +74,14 @@ function Stepper({ label, value, onMinus, onPlus }: { label: string; value: numb
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 12 },
-  stepper: { flex: 1, backgroundColor: colors.card, borderRadius: radius, padding: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
+  stepper: { flex: 1, minWidth: 0, backgroundColor: colors.card, borderRadius: radius, paddingVertical: 12, paddingHorizontal: 8, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
   stepLabel: { fontSize: 12, fontWeight: '700', color: colors.muted, textTransform: 'uppercase' },
-  stepRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 6 },
-  stepBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center' },
-  stepValue: { fontSize: 32, fontWeight: '800', color: colors.text, minWidth: 44, textAlign: 'center' },
+  // Buttons keep their size; the number takes whatever width is left, so the row fits any card.
+  stepRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', justifyContent: 'space-between', gap: 4, marginTop: 6 },
+  stepBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center' },
+  stepValue: { flex: 1, minWidth: 0, fontSize: 30, fontWeight: '800', color: colors.text, textAlign: 'center' },
+  stepBtnCompact: { width: 34, height: 34, borderRadius: 17 },
+  stepValueCompact: { fontSize: 26 },
   summary: { textAlign: 'center', fontSize: 20, fontWeight: '700', color: colors.text },
   metric: { fontSize: 14, color: colors.muted, fontWeight: '500' },
   hint: { fontSize: 13, color: colors.muted, lineHeight: 18 },

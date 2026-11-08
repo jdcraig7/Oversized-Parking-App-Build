@@ -15,7 +15,7 @@ import { getCachedListing, listingForSpot } from '../../services/sponsors';
 import { useAppState } from '../../state/AppState';
 import { useCommunity } from '../../state/Community';
 import { usePro } from '../../state/Pro';
-import { Button, Card, clearanceText, FeeBadge, FitBadge, InfoRow, KIND_ICONS, SectionTitle } from '../../ui/components';
+import { Button, Card, clearanceText, FeeBadge, InfoRow, KIND_ICONS, SectionTitle, type IconName } from '../../ui/components';
 import { colors, fitColors } from '../../ui/theme';
 
 const ACCESS_TEXT = {
@@ -127,8 +127,10 @@ export default function SpotScreen() {
 
         {/* The answer to "will my truck fit?" */}
         <Card style={[styles.verdict, { backgroundColor: fitStyle.bg, borderColor: fitStyle.pin }]}>
-          <FitBadge fit={fit} large />
-          <Text style={[styles.verdictText, { color: fitStyle.fg }]}>{describeFit(fit)}</Text>
+          <View style={styles.verdictRow}>
+            <Ionicons name={fitStyle.icon as IconName} size={26} color={fitStyle.fg} />
+            <Text style={[styles.verdictText, { color: fitStyle.fg }]}>{describeFit(fit)}</Text>
+          </View>
           <View style={styles.compare}>
             <Measure label="Clearance" value={clearance.status === 'limited' ? formatFeetInches(clearance.meters) : clearance.status === 'open' ? 'No limit' : '?'} />
             <Measure label="Your vehicle" value={formatFeetInches(settings.vehicleMeters)} />
@@ -247,7 +249,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '800', color: colors.text },
   subtitle: { fontSize: 14, color: colors.muted, marginTop: 2 },
   verdict: { gap: 10, borderWidth: 1.5 },
-  verdictText: { fontSize: 20, fontWeight: '800' },
+  verdictRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  verdictText: { flex: 1, fontSize: 20, fontWeight: '800' },
   verdictNote: { fontSize: 13, color: colors.text, lineHeight: 18 },
   compare: { flexDirection: 'row', gap: 8 },
   measure: { flex: 1, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 10, paddingVertical: 8, alignItems: 'center' },
