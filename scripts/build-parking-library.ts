@@ -130,6 +130,8 @@ function applyResearch(records: Map<string, TileRecord>, dir: string): [number, 
       }
       if (row.price) tags.charge = row.price;
       if (row.hours) tags.opening_hours = row.hours;
+      // A source can confirm public access (e.g. an operator's page for paid parking).
+      if (row.access) tags.access = row.access;
       tags['research:source'] = row.source;
       if (row.source_url) tags['research:url'] = row.source_url;
       if (row.checked) tags['research:checked'] = row.checked;

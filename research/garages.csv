@@ -1,4 +1,30 @@
-osm_id,name,clearance,price,hours,source,source_url,checked,note
-way/251440087,The Exchange Parking Structure (Glendale CA),6',,24/7,listing,https://www.parkme.com/lot/90464/exchange-parking-structure-glendale-ca,2026-11-08,"Apple Maps lists 6'0"" and ParkMe 6'4"", so we use the lower. Hours from a Glendale parking guide (city structures are open 24/7)."
-way/471844277,Orange Street Public Parking Structure (Glendale CA),8'2",First 90 min free; then $3/hr; $15 daily max,24/7,listing,https://www.yelp.com/biz/orange-parking-structure-glendale,2026-11-08,"Clearance from a user photo caption on Yelp. Rates from the Downtown Glendale parking directory."
-way/471928064,505 North Brand Parking (Glendale CA),6'7",,,listing,https://www.parkwhiz.com/p/glendale-parking/505-n-brand-blvd/,2026-11-08,
+osm_id,name,clearance,price,hours,access,source,source_url,checked,note
+way/251440087,The Exchange Parking Structure (Glendale CA),6',,24/7,,listing,https://www.parkme.com/lot/90464/exchange-parking-structure-glendale-ca,2026-11-08,"Apple Maps lists 6'0"" and ParkMe 6'4"", so we use the lower. Hours from a Glendale parking guide (city structures are open 24/7)."
+way/471844277,Orange Street Public Parking Structure (Glendale CA),"8'2""",First 90 min free; then $3/hr; $15 daily max,24/7,,listing,https://www.yelp.com/biz/orange-parking-structure-glendale,2026-11-08,Clearance from a user photo caption on Yelp. Rates from the Downtown Glendale parking directory.
+way/471928064,505 North Brand Parking (Glendale CA),"6'7""",,,,listing,https://www.parkwhiz.com/p/glendale-parking/505-n-brand-blvd/,2026-11-08,
+node/470894964,L.A. LIVE East Garage (Los Angeles),"8'2""",,,yes,operator,https://www.lalive.com/visitor-center/parking,2026-11-08,"No limos, buses, Sprinter vans or oversized vehicles with passes."
+way/428021790,L.A. LIVE West Garage (Los Angeles),"8'2""",,,yes,operator,https://www.lalive.com/visitor-center/parking,2026-11-08,"No limos, buses, Sprinter vans or oversized vehicles with passes."
+way/413226228,LAX Parking Structure 2A,8',,,,operator,https://www.flylax.com/parking-at-lax,2026-11-08,
+way/413226231,LAX Parking Structure 2B,"6'10""",,,,operator,https://www.flylax.com/parking-at-lax,2026-11-08,
+way/413226233,LAX Parking Structure 5,7',,,,operator,https://www.flylax.com/parking-at-lax,2026-11-08,
+way/413226236,LAX Parking Structure 7,7',,,,operator,https://www.flylax.com/parking-at-lax,2026-11-08,
+node/8459070477,Music Center garage (Los Angeles),"6'3""",,,,listing,https://en.parkopedia.com/parking/garage/the_music_center/90012/los_angeles/,2026-11-08,
+way/111586252,Union Square Garage (San Francisco),"6'7""",,,,operator,https://www.sfmta.com/garages-lots/union-square-garage,2026-11-08,"The right-hand Geary Street lane allows 8'0""; vehicles over 6'7"" must park on the main level."
+way/162056251,North Beach Garage (San Francisco),7',,,,operator,https://www.sfmta.com/garages-lots/north-beach-garage,2026-11-08,
+way/33617520,Ellis-O'Farrell Garage (San Francisco),"6'5""",,,,listing,https://willifit.ai/city/san-francisco-ca,2026-11-08,"Listing attributes this to SFMTA; an older listing gives 6'2"" on O'Farrell and 8'2"" on Ellis."
+way/332238072,Sutter-Stockton Garage (San Francisco),"6'5""",,,,listing,https://willifit.ai/city/san-francisco-ca,2026-11-08,Listing attributes this to SFMTA.
+way/24335195,Moscone Center Garage (San Francisco),"6'6""",,,,listing,https://willifit.ai/city/san-francisco-ca,2026-11-08,Listing attributes this to SFMTA.
+way/156123224,5th & Mission Garage (San Francisco),"6'8""",,,,listing,https://willifit.ai/city/san-francisco-ca,2026-11-08,"An older listing gives 7'2"" at the Mission Street entrance."
+way/331119671,Capitol Garage (Sacramento),"6'7""",,,,listing,https://stamps.org/Portals/0/stampshow/Parking-2022.pdf,2026-11-08,From an event parking guide (2022).
+way/331119604,City Hall Garage (Sacramento),"6'10""",,24/7,,listing,https://cweaac26.eventscribe.net/aaStatic.asp?SFP=TU5SV0ZMS0ZAMjQ3NTJAUGFya2luZyBJbmZv,2026-11-08,From an event parking guide.
+way/120726098,Memorial Garage (Sacramento),7',,24/7,,listing,https://cweaac26.eventscribe.net/aaStatic.asp?SFP=TU5SV0ZMS0ZAMjQ3NTJAUGFya2luZyBJbmZv,2026-11-08,From an event parking guide.
+way/39020116,Fourth Street Garage (San Jose),7',,,,operator,https://parksj.org/fourth-street-garage/,2026-11-08,"8'2"" at the entrance; 7'0"" on Level 2. We use the lower value."
+way/77839884,De Lacey Garage (Pasadena),"6'8""",,,,operator,https://parkingconcepts.com/facilities/de-lacey-garage/,2026-11-08,Operator listing (Parking Concepts).
+way/36985263,Center Street Garage (Berkeley),7',,,,operator,https://berkeleyca.gov/city-services/parking/parking-garages-and-lots,2026-11-08,"City of Berkeley; run by LAZ Parking, (510) 843-1788."
+node/3064295838,Oxford Garage (Berkeley),7',,,,operator,https://berkeleyca.gov/city-services/parking/parking-garages-and-lots,2026-11-08,"City of Berkeley; run by LAZ Parking, (510) 843-1788."
+way/37060725,Telegraph-Channing Garage (Berkeley),"6'6""",,,,operator,https://berkeleyca.gov/city-services/parking/parking-garages-and-lots,2026-11-08,"City of Berkeley; run by LAZ Parking, (510) 843-1788."
+way/27275385,City Place A (Long Beach),7',,,,listing,https://www.parklb.com/parking-lotsgarages/downtown-parking/city-place-a-50-w-6th-st/,2026-11-08,Automated garage.
+way/441496866,The Pike Parking Garage (Long Beach),"6'10""",,,,listing,https://www.parklb.com/parking-lotsgarages/waterfront-parking/pike-parking-garage/,2026-11-08,
+way/27251869,Aquarium/Queensway Bay Garage (Long Beach),"8'2""",,,,listing,https://www.parklb.com/parking-lotsgarages/waterfront-parking/aquariumqueensway-garage/,2026-11-08,
+way/30929835,6th & K Parkade (San Diego),7',,,,listing,https://willifit.ai/city/san-diego-ca,2026-11-08,"Listing cites Parkopedia, checked April 2026."
+node/8873553330,Oakland City Center Garage (525 14th St),"6'8""",,,,listing,https://parkmobile.io/parking/locations/ca/oakland-parking/parking-lot/oakland-city-center-garage,2026-11-08,
