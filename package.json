@@ -14,6 +14,7 @@
     "expo-router": "~58.0.26",
     "expo-status-bar": "~58.0.4",
     "expo-system-ui": "~58.0.6",
+    "expo-updates": "~58.0.18",
     "react": "19.3.0",
     "react-dom": "^19.3.0",
     "react-native": "0.88.0",
@@ -40,7 +41,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "build:dev": "eas build --profile development",
-    "build:prod": "eas build --profile production --platform all"
+    "build:prod": "eas build --profile production --platform all",
+    "preview:publish": "eas update --branch preview --platform all"
   },
   "private": true
 }

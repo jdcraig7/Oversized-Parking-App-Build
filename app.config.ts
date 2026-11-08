@@ -6,9 +6,13 @@ const ADMOB_TEST_ANDROID = 'ca-app-pub-3940256099942544~3347511713';
 
 const bundleId = process.env.APP_BUNDLE_ID ?? 'com.oversizedparking.app';
 
+// EAS project in the jdcraig7s-team Expo account (builds and over-the-air updates).
+const EAS_PROJECT_ID = '055d950a-e038-45f5-8012-f66b2040d77d';
+
 const config: ExpoConfig = {
   name: 'Oversized Parking',
   slug: 'oversized-parking',
+  owner: 'jdcraig7s-team',
   scheme: 'oversizedparking',
   version: '1.0.0',
   orientation: 'portrait',
@@ -65,6 +69,15 @@ const config: ExpoConfig = {
   experiments: {
     typedRoutes: true,
   },
+  extra: {
+    eas: { projectId: EAS_PROJECT_ID },
+  },
+  updates: {
+    url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
+  },
+  // 'sdkVersion' lets Expo Go open published updates as a phone preview.
+  // Switch to { policy: 'fingerprint' } once you ship store builds with ads and purchases.
+  runtimeVersion: { policy: 'sdkVersion' },
 };
 
 export default config;

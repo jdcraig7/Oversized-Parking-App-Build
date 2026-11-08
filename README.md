@@ -120,6 +120,16 @@ The app itself is installed from the App Store and Google Play, so there's no we
 
 **Bottom line:** about **$8/month** (the Apple fee averaged out) while you test on free tiers, and about **$35/month** for a solid launch (Apple fee plus Supabase Pro, with parking data on option A). Costs stay low as you grow: the summaries the app loads are tiny, so Pro's included 250 GB of transfer covers a lot of drivers.
 
+## Preview on your iPhone (Expo Go)
+
+No Apple Developer account needed.
+
+1. Install **Expo Go** from the App Store and sign in with your Expo account (the one that owns the `jdcraig7s-team` account).
+2. Scan the preview QR code with the iPhone camera, or open the latest update on the [EAS dashboard](https://expo.dev/accounts/jdcraig7s-team/projects/oversized-parking/updates) and tap **Preview**.
+3. After code changes, publish a new preview with `npm run preview:publish` (needs `npx eas-cli@latest login` or an `EXPO_TOKEN`). Expo Go picks it up on the next launch.
+
+In Expo Go, ads and the Pro purchase are switched off automatically (they need a real build); everything else, including live parking data, works.
+
 ## Run it
 
 Requirements: Node 20+ and a phone.
