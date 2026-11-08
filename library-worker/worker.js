@@ -1,7 +1,8 @@
 // Serves the parking library (manifest.json and v1/<lat>/<lon>.json tiles)
 // from Cloudflare KV. Deployed by scripts/deploy-parking-library.ts.
-// The app asks for tiles as v1/<lat>/<lon>.json?v=<hash>, so a changed tile
-// has a new URL; reads re-check KV every minute so updates show quickly.
+// The app asks for tiles as v1/<lat>/<lon>.json?v=<hash>. A tile changed since
+// the first upload is stored under "<key>@<hash>", a brand-new KV key, so no
+// edge cache can serve an old copy; unchanged tiles use the plain key.
 const KEY = /^(manifest\.json|v1\/-?\d+\/-?\d+\.json)$/;
 
 export default {
@@ -12,7 +13,12 @@ export default {
     const key = new URL(request.url).pathname.replace(/^\/+/, '');
     if (!KEY.test(key)) return new Response('Not found', { status: 404 });
     const isManifest = key === 'manifest.json';
-    const body = await env.LIBRARY.get(key, { cacheTtl: 60 });
+    const version = new URL(request.url).searchParams.get('v');
+    let body = null;
+    if (!isManifest && version && /^[0-9a-f]{16}$/.test(version)) {
+      body = await env.LIBRARY.get(`${key}@${version}`, { cacheTtl: 86400 });
+    }
+    if (body === null) body = await env.LIBRARY.get(key, { cacheTtl: 60 });
     const headers = {
       'Access-Control-Allow-Origin': '*',
       'Cache-Control': isManifest ? 'public, max-age=300' : 'public, max-age=86400',

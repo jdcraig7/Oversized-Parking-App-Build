@@ -24,6 +24,9 @@ async function cf<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`${api}${path}`, { ...init, headers: { Authorization: `Bearer ${token}`, ...(init.headers ?? {}) } });
   const body = (await res.json()) as { success: boolean; result: T; errors: { message: string }[] };
   if (!body.success) throw new Error(`${init.method ?? 'GET'} ${path}: ${body.errors.map((e) => e.message).join('; ')}`);
+  // Bulk writes can "succeed" while individual keys fail (e.g. the daily write limit).
+  const failed = (body.result as { unsuccessful_keys?: string[] } | null)?.unsuccessful_keys ?? [];
+  if (failed.length) throw new Error(`${init.method ?? 'GET'} ${path}: ${failed.length} keys not written (${failed.slice(0, 5).join(', ')}...)`);
   return body.result;
 }
 
@@ -53,18 +56,32 @@ async function main() {
     const value = readFileSync(f, 'utf8');
     return { key: relative(dir, f).split('\\').join('/'), value, hash: createHash('sha1').update(value).digest('hex') };
   });
-  // Tiles first, manifest last, so the app never sees a manifest listing missing tiles.
-  const changed = all.filter((f) => old[f.key] !== f.hash).sort((a, b) => Number(a.key === 'manifest.json') - Number(b.key === 'manifest.json'));
-  const hashes = Object.fromEntries(all.map((f) => [f.key, f.hash]));
-  const writes = [...changed.map(({ key, value }) => ({ key, value })), { key: indexKey, value: JSON.stringify(hashes) }];
-  for (let i = 0; i < writes.length; i += 5000) {
+  // A tile that changed is written under "<key>@<hash>" (a new key, so edge
+  // caches can't serve the old one; see library-worker/worker.js). Tiles go
+  // first and the manifest last, so the app never sees a manifest listing
+  // tiles that aren't there yet.
+  const changed = all.filter((f) => old[f.key] !== f.hash);
+  const tileWrites = changed
+    .filter((f) => f.key !== 'manifest.json')
+    .map(({ key, value, hash }) => ({ key: old[key] ? `${key}@${hash.slice(0, 16)}` : key, value }));
+  const manifestChanged = changed.some((f) => f.key === 'manifest.json');
+  for (let i = 0; i < tileWrites.length; i += 5000) {
     await cf(`/storage/kv/namespaces/${ns.id}/bulk`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(writes.slice(i, i + 5000)),
+      body: JSON.stringify(tileWrites.slice(i, i + 5000)),
     });
   }
-  console.log(`KV: ${changed.length} of ${all.length} files changed and written`);
+  const finalWrites = [
+    ...(manifestChanged ? [{ key: 'manifest.json', value: readFileSync(join(dir, 'manifest.json'), 'utf8') }] : []),
+    { key: indexKey, value: JSON.stringify(Object.fromEntries(all.map((f) => [f.key, f.hash]))) },
+  ];
+  await cf(`/storage/kv/namespaces/${ns.id}/bulk`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(finalWrites),
+  });
+  console.log(`KV: ${tileWrites.length} changed tiles written${manifestChanged ? ', manifest updated' : ''} (${tileWrites.length + finalWrites.length} writes)`);
 
   // 3. The Worker that serves them.
   const form = new FormData();
