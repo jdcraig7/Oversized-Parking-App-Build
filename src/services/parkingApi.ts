@@ -1,5 +1,8 @@
-import { OVERPASS_URLS, USER_AGENT } from '../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { OVERPASS_URLS, PARKING_LIBRARY_URL, USER_AGENT } from '../config';
 import { buildParkingQuery, overpassFailure, parseOverpass, type OverpassResponse } from '../lib/osm';
+import { elementsWithin, tilePath, tilesForCircle, type ParkingTile } from '../lib/tiles';
 import type { LatLng, ParkingSpot } from '../lib/types';
 
 const CACHE_TTL_MS = 30 * 60 * 1000;
@@ -61,6 +64,15 @@ export async function searchParking(
   const hit = cache.get(key);
   if (!force && hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.spots;
 
+  if (PARKING_LIBRARY_URL) {
+    const tiles = await loadTiles(PARKING_LIBRARY_URL, tilesForCircle(center, radiusMeters), force);
+    const spots = parseOverpass({ elements: elementsWithin(tiles, center, radiusMeters) });
+    for (const s of spots) spotIndex.set(s.id, s);
+    cache.set(key, { at: Date.now(), spots });
+    if (cache.size > MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value!);
+    return spots;
+  }
+
   const body = `data=${encodeURIComponent(buildParkingQuery(center.latitude, center.longitude, radiusMeters))}`;
   const problems: string[] = [];
   for (const url of OVERPASS_URLS) {
@@ -109,4 +121,52 @@ export async function searchParking(
   throw new ParkingSearchError(
     `The parking map servers aren't responding right now. Please try again in a minute.\n\nDetails: ${problems.join(' · ')}`,
   );
+}
+
+// --- Our own parking library (static tiles) ---------------------------------
+
+/** Tiles are rebuilt weekly; a saved copy is good for a week, and used offline after that. */
+const TILE_FRESH_MS = 7 * 24 * 60 * 60 * 1000;
+const TILE_STORAGE_PREFIX = 'tile.v1.';
+const memoryTiles = new Map<string, ParkingTile>();
+
+async function storedTile(key: string): Promise<{ at: number; tile: ParkingTile } | null> {
+  try {
+    const raw = await AsyncStorage.getItem(TILE_STORAGE_PREFIX + key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function loadTile(baseUrl: string, key: string, force: boolean): Promise<ParkingTile> {
+  const inMemory = memoryTiles.get(key);
+  if (inMemory && !force) return inMemory;
+  const saved = await storedTile(key);
+  if (saved && !force && Date.now() - saved.at < TILE_FRESH_MS) {
+    memoryTiles.set(key, saved.tile);
+    return saved.tile;
+  }
+  try {
+    const res = await fetchWithTimeout(`${baseUrl}/${tilePath(key)}`, { headers: { 'User-Agent': USER_AGENT } }, SERVER_TIMEOUT_MS);
+    // No file means no parking in that square (ocean, desert...): an empty tile.
+    const tile: ParkingTile =
+      res.status === 404 ? { v: 1, updated: '', records: [] } : res.ok ? await res.json() : Promise.reject(new Error(`HTTP ${res.status}`));
+    memoryTiles.set(key, tile);
+    AsyncStorage.setItem(TILE_STORAGE_PREFIX + key, JSON.stringify({ at: Date.now(), tile })).catch(() => {});
+    return tile;
+  } catch (e) {
+    // Offline or host trouble: an older saved copy beats nothing.
+    if (saved) return saved.tile;
+    throw e;
+  }
+}
+
+async function loadTiles(baseUrl: string, keys: string[], force: boolean): Promise<ParkingTile[]> {
+  try {
+    return await Promise.all(keys.map((k) => loadTile(baseUrl, k, force)));
+  } catch (e) {
+    const detail = e instanceof Error && e.name === 'AbortError' ? `no answer in ${SERVER_TIMEOUT_MS / 1000}s` : e instanceof Error ? e.message : 'unknown error';
+    throw new ParkingSearchError(`Couldn't load parking. Check your connection and try again.\n\nDetails: parking library: ${detail}`);
+  }
 }

@@ -11,7 +11,14 @@ export const APP_NAME = 'Oversized Parking';
 /** Identifies the app to OpenStreetMap services, as their usage policies require. */
 export const USER_AGENT = `OversizedParkingApp/${Constants.expoConfig?.version ?? '1.0.0'} (${env.EXPO_PUBLIC_CONTACT_EMAIL ?? 'support@example.com'})`;
 
-/** Overpass servers to try in order. Point the first one at your own server for production. */
+/**
+ * Our own parking library: static tiles built by scripts/build-parking-library.sh
+ * and hosted for free (e.g. Cloudflare Pages). When set, the app reads parking
+ * from here instead of the public Overpass servers.
+ */
+export const PARKING_LIBRARY_URL = env.EXPO_PUBLIC_PARKING_LIBRARY_URL?.replace(/\/+$/, '');
+
+/** Overpass servers to try in order (fallback when no parking library is configured). Point the first one at your own server for production. */
 export const OVERPASS_URLS = (env.EXPO_PUBLIC_OVERPASS_URLS ?? 'https://overpass-api.de/api/interpreter,https://overpass.private.coffee/api/interpreter,https://overpass.kumi.systems/api/interpreter')
   .split(',')
   .map((u) => u.trim())
