@@ -1,9 +1,12 @@
 # Builds our parking library from OpenStreetMap and publishes it to
-# Cloudflare Pages (free). Runs weekly, on demand, and when the builder changes.
+# Cloudflare Workers + KV (free tier). Runs weekly, on demand, and when the
+# builder changes.
 #
-# Needs two repository secrets (Settings > Secrets and variables > Actions):
-#   CLOUDFLARE_API_TOKEN   token with "Cloudflare Pages: Edit"
-#   CLOUDFLARE_ACCOUNT_ID  your Cloudflare account ID
+# Publishing needs two repository secrets (Settings > Secrets and variables > Actions):
+#   CLOUDFLARE_API_TOKEN   token with "Workers Scripts: Edit" and "Workers KV Storage: Edit"
+#   CLOUDFLARE_ACCOUNT_ID  17bb38bf5c1449f4cfa3bf5c3cb69587
+# Without them the job still builds (a check), and publishing can be done with
+# scripts/deploy-parking-library.ts from anywhere that has the token.
 name: Parking library
 
 on:
@@ -15,6 +18,7 @@ on:
       - 'scripts/build-parking-library.*'
       - 'src/lib/tiles.ts'
       - 'src/lib/osm.ts'
+      - 'library-worker/**'
       - '.github/workflows/parking-library.yml'
 
 concurrency:
@@ -56,7 +60,7 @@ jobs:
           done
           du -sh "$OUT"
 
-      - name: Publish to Cloudflare Pages
+      - name: Publish to Cloudflare
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -65,4 +69,4 @@ jobs:
             echo "::warning::Cloudflare secrets are not set yet, so the library was built but not published."
             exit 0
           fi
-          npx --yes wrangler@4 pages deploy "$OUT" --project-name oversized-parking-library --branch main --commit-dirty=true
+          npx tsx scripts/deploy-parking-library.ts "$OUT"

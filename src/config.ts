@@ -16,7 +16,9 @@ export const USER_AGENT = `OversizedParkingApp/${Constants.expoConfig?.version ?
  * and hosted for free (e.g. Cloudflare Pages). When set, the app reads parking
  * from here instead of the public Overpass servers.
  */
-export const PARKING_LIBRARY_URL = env.EXPO_PUBLIC_PARKING_LIBRARY_URL?.replace(/\/+$/, '');
+export const PARKING_LIBRARY_URL = (
+  env.EXPO_PUBLIC_PARKING_LIBRARY_URL ?? 'https://oversized-parking-library.oversized-parking-17bb38.workers.dev'
+).replace(/\/+$/, '');
 
 /** Overpass servers to try in order (fallback when no parking library is configured). Point the first one at your own server for production. */
 export const OVERPASS_URLS = (env.EXPO_PUBLIC_OVERPASS_URLS ?? 'https://overpass-api.de/api/interpreter,https://overpass.private.coffee/api/interpreter,https://overpass.kumi.systems/api/interpreter')

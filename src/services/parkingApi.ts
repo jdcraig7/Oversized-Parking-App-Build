@@ -69,10 +69,14 @@ export async function searchParking(
   if (PARKING_LIBRARY_URL && plan?.covered) {
     const tiles = await loadTiles(PARKING_LIBRARY_URL, plan.fetch, force);
     const spots = parseOverpass({ elements: elementsWithin(tiles, center, radiusMeters) });
-    for (const s of spots) spotIndex.set(s.id, s);
-    cache.set(key, { at: Date.now(), spots });
-    if (cache.size > MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value!);
-    return spots;
+    // Nothing at all usually means the edge of the built area (a border tile
+    // holding a few places from the next state), so try the other source too.
+    if (spots.length > 0) {
+      for (const s of spots) spotIndex.set(s.id, s);
+      cache.set(key, { at: Date.now(), spots });
+      if (cache.size > MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value!);
+      return spots;
+    }
   }
   // Outside the library (or none configured): ask the public Overpass servers.
 
