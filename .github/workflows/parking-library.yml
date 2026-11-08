@@ -1,0 +1,68 @@
+# Builds our parking library from OpenStreetMap and publishes it to
+# Cloudflare Pages (free). Runs weekly, on demand, and when the builder changes.
+#
+# Needs two repository secrets (Settings > Secrets and variables > Actions):
+#   CLOUDFLARE_API_TOKEN   token with "Cloudflare Pages: Edit"
+#   CLOUDFLARE_ACCOUNT_ID  your Cloudflare account ID
+name: Parking library
+
+on:
+  schedule:
+    - cron: '17 9 * * 1' # Mondays 09:17 UTC
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/build-parking-library.*'
+      - 'src/lib/tiles.ts'
+      - 'src/lib/osm.ts'
+      - '.github/workflows/parking-library.yml'
+
+concurrency:
+  group: parking-library
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      # Regions from download.openstreetmap.fr/extracts/north-america/. Add more as the library grows.
+      REGIONS: us-west/california
+      OUT: parking-library
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install tools
+        run: |
+          npm ci --no-audit --no-fund
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq osmium-tool
+
+      - name: Build library
+        run: |
+          set -euo pipefail
+          for region in $REGIONS; do
+            file="$RUNNER_TEMP/$(basename "$region").osm.pbf"
+            base="https://download.openstreetmap.fr/extracts/north-america/$region.osm.pbf"
+            curl -sSfL --retry 5 --retry-delay 10 -o "$file" "$base"
+            echo "$(curl -sSfL "$base.md5" | cut -d' ' -f1)  $file" | md5sum -c -
+            scripts/build-parking-library.sh "$file" "$OUT"
+            rm "$file"
+          done
+          du -sh "$OUT"
+
+      - name: Publish to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::Cloudflare secrets are not set yet, so the library was built but not published."
+            exit 0
+          fi
+          npx --yes wrangler@4 pages deploy "$OUT" --project-name oversized-parking-library --branch main --commit-dirty=true

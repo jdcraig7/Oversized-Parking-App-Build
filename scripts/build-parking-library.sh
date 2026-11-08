@@ -19,5 +19,7 @@ osmium tags-filter "$input" nwr/amenity=parking nwr/amenity=fuel -o "$work/parki
 osmium export "$work/parking.pbf" -f geojsonseq --add-unique-id=type_id -o "$work/parking.geojsonseq"
 
 mkdir -p "$out"
+# Hosting rules (Cloudflare Pages): tiles can be cached for a day.
+printf '/*\n  Access-Control-Allow-Origin: *\n  Cache-Control: public, max-age=86400\n' > "$out/_headers"
 cd "$repo"
 npx tsx scripts/build-parking-library.ts "$work/parking.geojsonseq" "$out" "$updated"
