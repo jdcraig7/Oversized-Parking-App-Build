@@ -125,7 +125,7 @@ The app itself is installed from the App Store and Google Play, so there's no we
 No Apple Developer account needed.
 
 1. Install **Expo Go** from the App Store and sign in with your Expo account (the one that owns the `jdcraig7s-team` account).
-2. Scan the preview QR code with the iPhone camera, or open the latest update on the [EAS dashboard](https://expo.dev/accounts/jdcraig7s-team/projects/oversized-parking/updates) and tap **Preview**.
+2. Open `exp://u.expo.dev/055d950a-e038-45f5-8012-f66b2040d77d?channel-name=preview&runtime-version=exposdk:58.0.0` (or scan it as a QR code). It always loads the newest preview. You can also open any update on the [EAS dashboard](https://expo.dev/accounts/jdcraig7s-team/projects/oversized-parking/updates) and tap **Preview**.
 3. After code changes, publish a new preview with `npm run preview:publish` (needs `npx eas-cli@latest login` or an `EXPO_TOKEN`). Expo Go picks it up on the next launch.
 
 In Expo Go, ads and the Pro purchase are switched off automatically (they need a real build); everything else, including live parking data, works.
