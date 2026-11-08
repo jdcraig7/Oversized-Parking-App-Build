@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { OVERPASS_URLS, PARKING_LIBRARY_URL, USER_AGENT } from '../config';
 import { buildParkingQuery, overpassFailure, parseOverpass, type OverpassResponse } from '../lib/osm';
-import { elementsWithin, tilePath, tilesForCircle, type ParkingTile } from '../lib/tiles';
+import { elementsWithin, planTiles, tilePath, tilesForCircle, type LibraryManifest, type ParkingTile } from '../lib/tiles';
 import type { LatLng, ParkingSpot } from '../lib/types';
 
 const CACHE_TTL_MS = 30 * 60 * 1000;
@@ -64,14 +64,17 @@ export async function searchParking(
   const hit = cache.get(key);
   if (!force && hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.spots;
 
-  if (PARKING_LIBRARY_URL) {
-    const tiles = await loadTiles(PARKING_LIBRARY_URL, tilesForCircle(center, radiusMeters), force);
+  const manifest = PARKING_LIBRARY_URL ? await loadManifest(PARKING_LIBRARY_URL) : null;
+  const plan = manifest ? planTiles(manifest, tilesForCircle(center, radiusMeters)) : null;
+  if (PARKING_LIBRARY_URL && plan?.covered) {
+    const tiles = await loadTiles(PARKING_LIBRARY_URL, plan.fetch, force);
     const spots = parseOverpass({ elements: elementsWithin(tiles, center, radiusMeters) });
     for (const s of spots) spotIndex.set(s.id, s);
     cache.set(key, { at: Date.now(), spots });
     if (cache.size > MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value!);
     return spots;
   }
+  // Outside the library (or none configured): ask the public Overpass servers.
 
   const body = `data=${encodeURIComponent(buildParkingQuery(center.latitude, center.longitude, radiusMeters))}`;
   const problems: string[] = [];
@@ -136,6 +139,35 @@ async function storedTile(key: string): Promise<{ at: number; tile: ParkingTile 
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
+  }
+}
+
+const MANIFEST_FRESH_MS = 12 * 60 * 60 * 1000;
+const MANIFEST_STORAGE_KEY = 'library.manifest.v1';
+let manifestCache: { at: number; manifest: LibraryManifest } | null = null;
+
+/** The library index. Never throws: without it the app falls back to Overpass. */
+async function loadManifest(baseUrl: string): Promise<LibraryManifest | null> {
+  if (manifestCache && Date.now() - manifestCache.at < MANIFEST_FRESH_MS) return manifestCache.manifest;
+  let saved: { at: number; manifest: LibraryManifest } | null = null;
+  try {
+    const raw = await AsyncStorage.getItem(MANIFEST_STORAGE_KEY);
+    saved = raw ? JSON.parse(raw) : null;
+  } catch {}
+  if (saved && Date.now() - saved.at < MANIFEST_FRESH_MS) {
+    manifestCache = saved;
+    return saved.manifest;
+  }
+  try {
+    const res = await fetchWithTimeout(`${baseUrl}/manifest.json`, { headers: { 'User-Agent': USER_AGENT } }, SERVER_TIMEOUT_MS);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const manifest = (await res.json()) as LibraryManifest;
+    manifestCache = { at: Date.now(), manifest };
+    AsyncStorage.setItem(MANIFEST_STORAGE_KEY, JSON.stringify(manifestCache)).catch(() => {});
+    return manifest;
+  } catch (e) {
+    console.warn('Parking library index unavailable', e);
+    return saved?.manifest ?? null;
   }
 }
 

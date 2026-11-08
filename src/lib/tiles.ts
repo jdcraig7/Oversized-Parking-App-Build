@@ -42,6 +42,25 @@ export function tilesForCircle(center: LatLng, radiusMeters: number): string[] {
   return keys;
 }
 
+/** The library's index: which tiles exist and how many places each holds. */
+export interface LibraryManifest {
+  v: number;
+  updated: string;
+  total: number;
+  tiles: Record<string, number>;
+}
+
+/**
+ * Splits a search's tiles into ones to download and whether the library covers
+ * the area at all. Listed tiles hold parking; unlisted ones are empty. If none
+ * of the search's tiles is listed, the area is outside the library (e.g. a
+ * state not built yet) and the caller should use another source.
+ */
+export function planTiles(manifest: LibraryManifest, keys: string[]): { covered: boolean; fetch: string[] } {
+  const fetch = keys.filter((k) => manifest.tiles[k] !== undefined);
+  return { covered: fetch.length > 0, fetch };
+}
+
 const TYPES = { n: 'node', w: 'way', r: 'relation' } as const;
 
 export function recordToElement([t, id, lat, lon, tags]: TileRecord): OverpassElement {

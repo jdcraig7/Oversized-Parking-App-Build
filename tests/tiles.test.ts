@@ -5,6 +5,7 @@ import { parseOverpass } from '../src/lib/osm';
 import {
   elementsWithin,
   isLibraryCandidate,
+  planTiles,
   slimTags,
   tileKeyFor,
   tilePath,
@@ -69,5 +70,17 @@ describe('build filters', () => {
       slimTags({ amenity: 'parking', maxheight: '2.1', 'payment:cash': 'yes', 'payment:coins': 'no', source: 'survey', 'tiger:cfcc': 'A41' }),
       { amenity: 'parking', maxheight: '2.1', 'payment:cash': 'yes' },
     );
+  });
+});
+
+describe('planTiles', () => {
+  const manifest = { v: 1, updated: '2026-11-07', total: 30, tiles: { '136/-474': 20, '136/-473': 10 } };
+
+  it('downloads only listed tiles; unlisted ones are empty', () => {
+    assert.deepEqual(planTiles(manifest, ['136/-474', '135/-474', '136/-473']), { covered: true, fetch: ['136/-474', '136/-473'] });
+  });
+
+  it('reports areas outside the library so the app can use another source', () => {
+    assert.deepEqual(planTiles(manifest, ['158/-480']), { covered: false, fetch: [] });
   });
 });
