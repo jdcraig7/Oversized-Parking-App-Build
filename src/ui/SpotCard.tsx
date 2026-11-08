@@ -37,6 +37,16 @@ export function SpotCard({ result, onPress }: { result: SpotResult; onPress: () 
         <View style={styles.badges}>
           <FitBadge fit={fit} />
           <FeeBadge fee={spot.fee} />
+          {spot.access === 'customers' && (
+            <View style={[styles.tag, styles.warnTag]}>
+              <Text style={[styles.tagText, styles.warnText]}>Customers only</Text>
+            </View>
+          )}
+          {spot.access === 'unverified' && (
+            <View style={[styles.tag, styles.warnTag]}>
+              <Text style={[styles.tagText, styles.warnText]}>Access not confirmed</Text>
+            </View>
+          )}
           {driverReports > 0 && (
             <View style={styles.tag}>
               <Ionicons name="people" size={12} color="#374151" />
@@ -82,4 +92,6 @@ const styles = StyleSheet.create({
   badges: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 2 },
   tag: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: '#F3F4F6' },
   tagText: { fontSize: 12, fontWeight: '700', color: '#374151' },
+  warnTag: { backgroundColor: '#FEF3C7' },
+  warnText: { color: '#92400E' },
 });

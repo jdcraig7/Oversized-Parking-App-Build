@@ -12,7 +12,24 @@ export type SpotKind =
 
 export type FeeStatus = 'free' | 'paid' | 'unknown';
 
-export type AccessLevel = 'public' | 'customers' | 'permit' | 'unknown';
+/**
+ * Who may park here.
+ * - public: anyone (tagged public, paid parking, city-run, park & ride, truck parking)
+ * - customers: only while visiting a business (store, restaurant, zoo...)
+ * - restricted: employees, residents, permit holders: never useful, always hidden
+ * - unverified: nothing says either way; most are store or apartment lots
+ */
+export type AccessLevel = 'public' | 'customers' | 'restricted' | 'unverified';
+
+/** Where a researched value (clearance, price) came from. */
+export interface ResearchNote {
+  /** 'sign' (posted sign / photo), 'operator' (official site), or 'listing' (third-party site). */
+  source: 'sign' | 'operator' | 'listing';
+  url?: string;
+  /** ISO date the value was checked. */
+  checked?: string;
+  note?: string;
+}
 
 export interface ParkingSpot {
   /** Stable id, e.g. `osm:way/123456`. */
@@ -46,6 +63,8 @@ export interface ParkingSpot {
   payment: string[];
   amenities: string[];
   description?: string;
+  /** Our own research for this place, when it fills in or corrects map data. */
+  research?: ResearchNote;
   /** Where this record came from, e.g. an OpenStreetMap object URL. */
   sourceUrl: string;
   /** ISO date this data was last fetched. */

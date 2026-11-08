@@ -16,13 +16,20 @@ import { useAppState } from '../../state/AppState';
 import { useCommunity } from '../../state/Community';
 import { usePro } from '../../state/Pro';
 import { Button, Card, clearanceText, FeeBadge, InfoRow, KIND_ICONS, SectionTitle, type IconName } from '../../ui/components';
+import { MiniMap } from '../../ui/MiniMap';
 import { colors, fitColors } from '../../ui/theme';
 
 const ACCESS_TEXT = {
   public: 'Open to the public',
   customers: 'Customers / visitors only',
-  permit: 'Permit holders',
-  unknown: undefined,
+  restricted: 'Employees, residents or permit holders only',
+  unverified: 'Not confirmed: may be a business lot',
+} as const;
+
+const RESEARCH_SOURCE_TEXT = {
+  sign: 'a photo of the posted sign',
+  operator: "the operator's official information",
+  listing: 'a third-party parking listing (not verified by us)',
 } as const;
 
 export default function SpotScreen() {
@@ -110,6 +117,21 @@ export default function SpotScreen() {
           </View>
         </View>
 
+        <MiniMap latitude={spot.latitude} longitude={spot.longitude} onPress={directions} />
+
+        {spot.access !== 'public' && (
+          <Card style={styles.accessWarning}>
+            <Ionicons name="warning-outline" size={20} color="#92400E" />
+            <Text style={styles.accessWarningText}>
+              {spot.access === 'customers'
+                ? 'Customers only. This lot is for people visiting the business, so don’t leave your vehicle here long-term.'
+                : spot.access === 'restricted'
+                  ? 'Not open to the public (employees, residents or permit holders).'
+                  : 'Public access isn’t confirmed. Many lots like this belong to stores or apartments; check the signs before you park.'}
+            </Text>
+          </Card>
+        )}
+
         {sponsor && (
           <Card style={styles.sponsor}>
             <View style={styles.sponsorLabel}>
@@ -144,9 +166,24 @@ export default function SpotScreen() {
                 : clearance.status === 'open'
                 ? 'Open-air parking: nothing overhead is recorded. Watch for entry barriers, trees and wires.'
                 : clearance.status === 'unknown'
-                  ? 'No clearance is published for this structure. Look for the sign at the entrance before you pull in.'
-                  : `Published clearance: ${spot.clearanceRaw}.`}
+                  ? `No clearance on record for this structure yet. Standard garages are often around 7 ft${settings.vehicleMeters >= 2.08 ? ', so a vehicle your height may not fit' : ''}. Check the sign at the entrance (tap Street View on the map above to look first), or call ahead.`
+                  : spot.research
+                    ? `Clearance from ${RESEARCH_SOURCE_TEXT[spot.research.source]}${spot.research.checked ? `, checked ${spot.research.checked}` : ''}. ${spot.research.note ? `${spot.research.note} ` : ''}Always check the posted sign.`
+                    : `Published clearance: ${spot.clearanceRaw}.`}
           </Text>
+          {clearance.status === 'unknown' && !sponsorOnly && (
+            <View style={styles.unknownActions}>
+              {!!spot.phone && (
+                <Button title="Call to ask" icon="call-outline" variant="secondary" onPress={() => Linking.openURL(`tel:${spot.phone!.replace(/[^\d+]/g, '')}`)} style={{ flex: 1 }} />
+              )}
+              <Button title="I know the clearance" icon="create-outline" variant="secondary" onPress={() => router.push({ pathname: '/report/[id]', params: { id: spot.id } })} style={{ flex: 1 }} />
+            </View>
+          )}
+          {!!spot.research?.url && clearance.status === 'limited' && source === 'map' && (
+            <Text style={styles.sourceLink} onPress={() => Linking.openURL(spot.research!.url!)}>
+              View source
+            </Text>
+          )}
         </Card>
 
         <View style={styles.actions}>
@@ -250,6 +287,10 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, color: colors.muted, marginTop: 2 },
   verdict: { gap: 10, borderWidth: 1.5 },
   verdictRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  unknownActions: { flexDirection: 'row', gap: 8 },
+  sourceLink: { fontSize: 13, fontWeight: '700', color: colors.primary },
+  accessWarning: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', backgroundColor: '#FFFBEB', borderColor: '#FCD34D', marginBottom: 12 },
+  accessWarningText: { flex: 1, fontSize: 14, color: '#78350F', lineHeight: 20 },
   verdictText: { flex: 1, fontSize: 20, fontWeight: '800' },
   verdictNote: { fontSize: 13, color: colors.text, lineHeight: 18 },
   compare: { flexDirection: 'row', gap: 8 },

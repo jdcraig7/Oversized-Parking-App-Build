@@ -24,6 +24,11 @@ export interface ParkingTile {
 export const tileIndex = (degrees: number) => Math.floor(degrees / TILE_DEGREES);
 export const tileKey = (latIdx: number, lonIdx: number) => `${latIdx}/${lonIdx}`;
 export const tilePath = (key: string) => `v${TILE_FORMAT_VERSION}/${key}.json`;
+/**
+ * A tile's URL path with its content hash from the manifest, so any cache
+ * (the phone's or an HTTP cache) treats an updated tile as a new file.
+ */
+export const versionedTilePath = (key: string, hash: string) => `${tilePath(key)}?v=${hash}`;
 
 export function tileKeyFor({ latitude, longitude }: LatLng): string {
   return tileKey(tileIndex(latitude), tileIndex(longitude));
@@ -47,7 +52,10 @@ export interface LibraryManifest {
   v: number;
   updated: string;
   total: number;
+  /** Places per tile. */
   tiles: Record<string, number>;
+  /** Content hash per tile (see versionedTilePath). */
+  hashes?: Record<string, string>;
 }
 
 /**

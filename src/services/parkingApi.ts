@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { OVERPASS_URLS, PARKING_LIBRARY_URL, USER_AGENT } from '../config';
 import { buildParkingQuery, overpassFailure, parseOverpass, type OverpassResponse } from '../lib/osm';
-import { elementsWithin, planTiles, tilePath, tilesForCircle, type LibraryManifest, type ParkingTile } from '../lib/tiles';
+import { elementsWithin, planTiles, versionedTilePath, tilesForCircle, type LibraryManifest, type ParkingTile } from '../lib/tiles';
 import type { LatLng, ParkingSpot } from '../lib/types';
 
 const CACHE_TTL_MS = 30 * 60 * 1000;
@@ -64,10 +64,10 @@ export async function searchParking(
   const hit = cache.get(key);
   if (!force && hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.spots;
 
-  const manifest = PARKING_LIBRARY_URL ? await loadManifest(PARKING_LIBRARY_URL) : null;
+  const manifest = PARKING_LIBRARY_URL ? await loadManifest(PARKING_LIBRARY_URL, force) : null;
   const plan = manifest ? planTiles(manifest, tilesForCircle(center, radiusMeters)) : null;
   if (PARKING_LIBRARY_URL && plan?.covered) {
-    const tiles = await loadTiles(PARKING_LIBRARY_URL, plan.fetch, force);
+    const tiles = await loadTiles(PARKING_LIBRARY_URL, manifest!, plan.fetch);
     const spots = parseOverpass({ elements: elementsWithin(tiles, center, radiusMeters) });
     // Nothing at all usually means the edge of the built area (a border tile
     // holding a few places from the next state), so try the other source too.
@@ -132,12 +132,12 @@ export async function searchParking(
 
 // --- Our own parking library (static tiles) ---------------------------------
 
-/** Tiles are rebuilt weekly; a saved copy is good for a week, and used offline after that. */
-const TILE_FRESH_MS = 7 * 24 * 60 * 60 * 1000;
-const TILE_STORAGE_PREFIX = 'tile.v1.';
+// Tiles are named by content hash, so a saved copy is valid for as long as the
+// manifest still lists that hash: no expiry needed, and it works offline.
+const TILE_STORAGE_PREFIX = 'tile.v2.';
 const memoryTiles = new Map<string, ParkingTile>();
 
-async function storedTile(key: string): Promise<{ at: number; tile: ParkingTile } | null> {
+async function storedTile(key: string): Promise<{ hash: string; tile: ParkingTile } | null> {
   try {
     const raw = await AsyncStorage.getItem(TILE_STORAGE_PREFIX + key);
     return raw ? JSON.parse(raw) : null;
@@ -146,19 +146,20 @@ async function storedTile(key: string): Promise<{ at: number; tile: ParkingTile 
   }
 }
 
-const MANIFEST_FRESH_MS = 12 * 60 * 60 * 1000;
-const MANIFEST_STORAGE_KEY = 'library.manifest.v1';
+/** How often to check for library updates (new tiles, research). */
+const MANIFEST_FRESH_MS = 60 * 60 * 1000;
+const MANIFEST_STORAGE_KEY = 'library.manifest.v2';
 let manifestCache: { at: number; manifest: LibraryManifest } | null = null;
 
 /** The library index. Never throws: without it the app falls back to Overpass. */
-async function loadManifest(baseUrl: string): Promise<LibraryManifest | null> {
-  if (manifestCache && Date.now() - manifestCache.at < MANIFEST_FRESH_MS) return manifestCache.manifest;
+async function loadManifest(baseUrl: string, force = false): Promise<LibraryManifest | null> {
+  if (!force && manifestCache && Date.now() - manifestCache.at < MANIFEST_FRESH_MS) return manifestCache.manifest;
   let saved: { at: number; manifest: LibraryManifest } | null = null;
   try {
     const raw = await AsyncStorage.getItem(MANIFEST_STORAGE_KEY);
     saved = raw ? JSON.parse(raw) : null;
   } catch {}
-  if (saved && Date.now() - saved.at < MANIFEST_FRESH_MS) {
+  if (!force && saved && Date.now() - saved.at < MANIFEST_FRESH_MS) {
     manifestCache = saved;
     return saved.manifest;
   }
@@ -171,25 +172,24 @@ async function loadManifest(baseUrl: string): Promise<LibraryManifest | null> {
     return manifest;
   } catch (e) {
     console.warn('Parking library index unavailable', e);
-    return saved?.manifest ?? null;
+    return manifestCache?.manifest ?? saved?.manifest ?? null;
   }
 }
 
-async function loadTile(baseUrl: string, key: string, force: boolean): Promise<ParkingTile> {
-  const inMemory = memoryTiles.get(key);
-  if (inMemory && !force) return inMemory;
+async function loadTile(baseUrl: string, key: string, hash: string): Promise<ParkingTile> {
+  const inMemory = memoryTiles.get(hash);
+  if (inMemory) return inMemory;
   const saved = await storedTile(key);
-  if (saved && !force && Date.now() - saved.at < TILE_FRESH_MS) {
-    memoryTiles.set(key, saved.tile);
+  if (saved?.hash === hash) {
+    memoryTiles.set(hash, saved.tile);
     return saved.tile;
   }
   try {
-    const res = await fetchWithTimeout(`${baseUrl}/${tilePath(key)}`, { headers: { 'User-Agent': USER_AGENT } }, SERVER_TIMEOUT_MS);
-    // No file means no parking in that square (ocean, desert...): an empty tile.
-    const tile: ParkingTile =
-      res.status === 404 ? { v: 1, updated: '', records: [] } : res.ok ? await res.json() : Promise.reject(new Error(`HTTP ${res.status}`));
-    memoryTiles.set(key, tile);
-    AsyncStorage.setItem(TILE_STORAGE_PREFIX + key, JSON.stringify({ at: Date.now(), tile })).catch(() => {});
+    const res = await fetchWithTimeout(`${baseUrl}/${versionedTilePath(key, hash)}`, { headers: { 'User-Agent': USER_AGENT } }, SERVER_TIMEOUT_MS);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const tile = (await res.json()) as ParkingTile;
+    memoryTiles.set(hash, tile);
+    AsyncStorage.setItem(TILE_STORAGE_PREFIX + key, JSON.stringify({ hash, tile })).catch(() => {});
     return tile;
   } catch (e) {
     // Offline or host trouble: an older saved copy beats nothing.
@@ -198,9 +198,15 @@ async function loadTile(baseUrl: string, key: string, force: boolean): Promise<P
   }
 }
 
-async function loadTiles(baseUrl: string, keys: string[], force: boolean): Promise<ParkingTile[]> {
+async function loadTiles(baseUrl: string, manifest: LibraryManifest, keys: string[]): Promise<ParkingTile[]> {
   try {
-    return await Promise.all(keys.map((k) => loadTile(baseUrl, k, force)));
+    return await Promise.all(
+      keys.map((k) => {
+        const hash = manifest.hashes?.[k];
+        if (!hash) throw new Error('library index is out of date');
+        return loadTile(baseUrl, k, hash);
+      }),
+    );
   } catch (e) {
     const detail = e instanceof Error && e.name === 'AbortError' ? `no answer in ${SERVER_TIMEOUT_MS / 1000}s` : e instanceof Error ? e.message : 'unknown error';
     throw new ParkingSearchError(`Couldn't load parking. Check your connection and try again.\n\nDetails: parking library: ${detail}`);

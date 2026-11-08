@@ -297,6 +297,7 @@ export default function SearchScreen() {
 
       {/* Filters */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={{ flexGrow: 0 }}>
+        <Chip label="Public only" icon="people" active={filters.publicOnly} onPress={() => setFilter({ publicOnly: !filters.publicOnly })} />
         <Chip label="Fits my vehicle" icon="checkmark" active={filters.hideTooLow} onPress={() => setFilter({ hideTooLow: !filters.hideTooLow })} />
         <Chip label="Known clearance" active={filters.hideUnknown} onPress={() => setFilter({ hideUnknown: !filters.hideUnknown })} />
         <Chip label="Free" icon="pricetag" active={filters.freeOnly} onPress={() => setFilter({ freeOnly: !filters.freeOnly })} />
@@ -374,7 +375,10 @@ export default function SearchScreen() {
                 <View style={styles.empty}>
                   <Text style={styles.emptyTitle}>{error ? 'Something went wrong' : 'No matching spots'}</Text>
                   <Text style={styles.emptyText}>
-                    {error ?? 'Try a bigger search radius in Vehicle settings, or turn off a filter.'}
+                    {error ??
+                      (filters.publicOnly
+                        ? 'No confirmed public parking here. Try a wider area, or turn off "Public only" to see store and business lots too.'
+                        : 'Try a bigger search radius in Vehicle settings, or turn off a filter.')}
                   </Text>
                   {!!error && <Button title="Try again" icon="refresh" onPress={() => setRefreshCount((n) => n + 1)} />}
                   {!error && settings.radiusMiles < 10 && (

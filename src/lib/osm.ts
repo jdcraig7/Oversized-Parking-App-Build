@@ -2,7 +2,7 @@
 // This file has no React Native imports so it can be unit tested in Node.
 
 import { parseHeight, type Clearance } from './height';
-import type { AccessLevel, FeeStatus, ParkingSpot, SpotKind } from './types';
+import type { AccessLevel, FeeStatus, ParkingSpot, ResearchNote, SpotKind } from './types';
 
 export interface OverpassElement {
   type: 'node' | 'way' | 'relation';
@@ -115,13 +115,43 @@ function feeFor(tags: Record<string, string>): { fee: FeeStatus; feeHours?: stri
   return { fee: 'unknown' };
 }
 
-function accessFor(tags: Record<string, string>): AccessLevel {
-  const a = tags.access?.toLowerCase();
-  if (!a) return 'unknown';
-  if (a === 'yes' || a === 'public' || a === 'permissive') return 'public';
-  if (a === 'customers' || a === 'destination') return 'customers';
-  if (a === 'permit' || a === 'permissive;permit') return 'permit';
-  return 'unknown';
+const RESTRICTED_ACCESS = /^(private|no|employees?|staff|residents?|permit|delivery|military|agricultural|forestry)$/;
+const CUSTOMER_ACCESS = /^(customers?|destination|visitors?|guests?|patients?)$/;
+const PUBLIC_ACCESS = /^(yes|public|permissive)$/;
+const RESTRICTED_NAME = /\b(employees?|staff|residents?|resident's|tenants?|permit|reserved|monthly parking only|physicians?|faculty)\b/i;
+const CUSTOMER_NAME = /\b(customers?|visitors?|guests?|patients?|patrons?|members?|shoppers?)\b/i;
+const PUBLIC_NAME = /\b(public|municipal|city|county|park\s*(and|&|n)\s*ride|metro|transit)\b|\blot\s*#?\d+\b/i;
+const PUBLIC_OPERATOR = /\b(city|county|town|village|municipal|state|transit|metro|caltrans|department|authority|parks?)\b/i;
+
+/**
+ * Most lots in OpenStreetMap have no access tag at all, and those are usually
+ * store, restaurant or apartment lots. A place only counts as public when
+ * something says so: tags, a fee (paid parking is open to anyone who pays),
+ * a public operator, park & ride, truck parking, or a name like "City Lot 6".
+ */
+function accessFor(kind: SpotKind, tags: Record<string, string>, fee: FeeStatus): AccessLevel {
+  const a = (tags.access ?? '').toLowerCase().split(';')[0].trim();
+  const name = tags.name ?? '';
+  if (RESTRICTED_ACCESS.test(a) || RESTRICTED_NAME.test(name)) return 'restricted';
+  if (CUSTOMER_ACCESS.test(a) || CUSTOMER_NAME.test(name)) return 'customers';
+  if (PUBLIC_ACCESS.test(a)) return 'public';
+  if (kind === 'truck' || kind === 'truck-stop' || kind === 'street') return 'public';
+  if (tags.park_ride && tags.park_ride !== 'no') return 'public';
+  if (fee === 'paid') return 'public';
+  if (PUBLIC_OPERATOR.test(tags.operator ?? '') || PUBLIC_NAME.test(name)) return 'public';
+  return 'unverified';
+}
+
+/** Research notes are merged into the library as research:* tags (scripts/build-parking-library.ts). */
+function researchFor(tags: Record<string, string>): ResearchNote | undefined {
+  const source = tags['research:source'];
+  if (source !== 'sign' && source !== 'operator' && source !== 'listing') return undefined;
+  return {
+    source,
+    url: tags['research:url'],
+    checked: tags['research:checked'],
+    note: tags['research:note'],
+  };
 }
 
 function addressFor(tags: Record<string, string>): string | undefined {
@@ -205,7 +235,7 @@ export function elementToSpot(el: OverpassElement, fetchedAt: string): ParkingSp
     price: tags.charge,
     feeHours,
     hours: tags.opening_hours,
-    access: accessFor(tags),
+    access: accessFor(kind, tags, fee),
     capacity: toInt(tags.capacity),
     truckCapacity: toInt(tags['capacity:hgv']),
     maxStay: tags.maxstay,
@@ -218,6 +248,7 @@ export function elementToSpot(el: OverpassElement, fetchedAt: string): ParkingSp
     payment: paymentFor(tags),
     amenities: amenitiesFor(kind, tags),
     description: tags.description,
+    research: researchFor(tags),
     sourceUrl: `https://www.openstreetmap.org/${el.type}/${el.id}`,
     fetchedAt,
   };

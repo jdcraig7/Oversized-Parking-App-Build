@@ -84,3 +84,14 @@ describe('planTiles', () => {
     assert.deepEqual(planTiles(manifest, ['158/-480']), { covered: false, fetch: [] });
   });
 });
+
+describe('research sheet', () => {
+  it('reads quoted CSV fields', async () => {
+    const { parseCsv } = await import('../scripts/build-parking-library');
+    const rows = parseCsv('osm_id,clearance,note\nway/1,6\'7",plain\nway/2,"7\' 2""","has, a comma and ""quotes"""\n');
+    assert.deepEqual(rows, [
+      { osm_id: 'way/1', clearance: `6'7"`, note: 'plain' },
+      { osm_id: 'way/2', clearance: `7' 2"`, note: 'has, a comma and "quotes"' },
+    ]);
+  });
+});

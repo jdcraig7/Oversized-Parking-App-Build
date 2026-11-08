@@ -123,6 +123,47 @@ describe('parseOverpass', () => {
   });
 });
 
+describe('access classification', () => {
+  const access = (tags: Record<string, string>) =>
+    parseOverpass({ elements: [{ type: 'way', id: 1, center: { lat: 34.14, lon: -118.25 }, tags: { amenity: 'parking', ...tags } }] })[0]?.access;
+
+  it('trusts explicit access tags', () => {
+    assert.equal(access({ access: 'yes' }), 'public');
+    assert.equal(access({ access: 'permissive' }), 'public');
+    assert.equal(access({ access: 'customers' }), 'customers');
+    assert.equal(access({ access: 'employees' }), 'restricted');
+    assert.equal(access({ access: 'permit' }), 'restricted');
+  });
+
+  it('treats paid, city-run, park & ride and numbered city lots as public', () => {
+    assert.equal(access({ fee: 'yes' }), 'public');
+    assert.equal(access({ operator: 'City of Glendale' }), 'public');
+    assert.equal(access({ park_ride: 'yes' }), 'public');
+    assert.equal(access({ name: 'Parking Lot 30' }), 'public');
+    assert.equal(access({ name: 'Orange Street Public Parking Structure' }), 'public');
+  });
+
+  it('reads restrictions and customer-only use from names', () => {
+    assert.equal(access({ name: 'Wells Fargo Customer Parking' }), 'customers');
+    assert.equal(access({ name: 'Visitor Parking' }), 'customers');
+    assert.equal(access({ name: 'Physician and Staff Parking' }), 'restricted');
+    assert.equal(access({ name: '400 & 450 North Brand (Monthly Parking Only)' }), 'restricted');
+    assert.equal(access({ name: 'Resident Parking', access: 'yes' }), 'restricted');
+  });
+
+  it('leaves untagged lots unverified (usually store or apartment lots)', () => {
+    assert.equal(access({}), 'unverified');
+    assert.equal(access({ name: 'Glendale Plaza' }), 'unverified');
+  });
+
+  it('reads our research notes', () => {
+    const [spot] = parseOverpass({
+      elements: [{ type: 'way', id: 2, center: { lat: 34.14, lon: -118.25 }, tags: { amenity: 'parking', parking: 'multi-storey', maxheight: `6'7"`, 'research:source': 'listing', 'research:url': 'https://example.com/listing', 'research:checked': '2026-11-08' } }],
+    });
+    assert.deepEqual(spot.research, { source: 'listing', url: 'https://example.com/listing', checked: '2026-11-08', note: undefined });
+  });
+});
+
 describe('buildParkingQuery', () => {
   it('queries parking and truck stops around a point and excludes private lots', () => {
     const q = buildParkingQuery(39.7392, -104.9903, 8046.7);

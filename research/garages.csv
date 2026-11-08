@@ -1,0 +1,4 @@
+osm_id,name,clearance,price,hours,source,source_url,checked,note
+way/251440087,The Exchange Parking Structure (Glendale CA),6',,24/7,listing,https://www.parkme.com/lot/90464/exchange-parking-structure-glendale-ca,2026-11-08,"Apple Maps lists 6'0"" and ParkMe 6'4"", so we use the lower. Hours from a Glendale parking guide (city structures are open 24/7)."
+way/471844277,Orange Street Public Parking Structure (Glendale CA),8'2",First 90 min free; then $3/hr; $15 daily max,24/7,listing,https://www.yelp.com/biz/orange-parking-structure-glendale,2026-11-08,"Clearance from a user photo caption on Yelp. Rates from the Downtown Glendale parking directory."
+way/471928064,505 North Brand Parking (Glendale CA),6'7",,,listing,https://www.parkwhiz.com/p/glendale-parking/505-n-brand-blvd/,2026-11-08,

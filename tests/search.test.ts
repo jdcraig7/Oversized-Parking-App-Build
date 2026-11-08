@@ -8,13 +8,13 @@ import { applyFilters, DEFAULT_FILTERS, evaluate, summarize } from '../src/lib/s
 const spots = parseOverpass({
   elements: [
     // Low garage, close by, paid.
-    { type: 'way', id: 1, center: { lat: 40.0, lon: -105.0 }, tags: { amenity: 'parking', parking: 'multi-storey', maxheight: '2.0', fee: 'yes' } },
+    { type: 'way', id: 1, center: { lat: 40.0, lon: -105.0 }, tags: { amenity: 'parking', parking: 'multi-storey', maxheight: '2.0', fee: 'yes', access: 'yes' } },
     // Free open lot, farther away.
-    { type: 'way', id: 2, center: { lat: 40.02, lon: -105.0 }, tags: { amenity: 'parking', fee: 'no' } },
+    { type: 'way', id: 2, center: { lat: 40.02, lon: -105.0 }, tags: { amenity: 'parking', fee: 'no', access: 'yes' } },
     // Tall garage, middle distance.
-    { type: 'way', id: 3, center: { lat: 40.01, lon: -105.0 }, tags: { amenity: 'parking', parking: 'multi-storey', maxheight: '2.6' } },
+    { type: 'way', id: 3, center: { lat: 40.01, lon: -105.0 }, tags: { amenity: 'parking', parking: 'multi-storey', maxheight: '2.6', access: 'yes' } },
     // Garage with no reported height.
-    { type: 'way', id: 4, center: { lat: 40.005, lon: -105.0 }, tags: { amenity: 'parking', parking: 'underground' } },
+    { type: 'way', id: 4, center: { lat: 40.005, lon: -105.0 }, tags: { amenity: 'parking', parking: 'underground', access: 'yes' } },
   ],
 });
 
@@ -68,6 +68,25 @@ describe('applyFilters', () => {
     assert.equal(r.clearanceSource, 'drivers');
     assert.equal(r.driverReports, 4);
     assert.equal(r.price, '$8 flat');
+  });
+});
+
+describe('access filtering', () => {
+  const lots = parseOverpass({
+    elements: [
+      { type: 'way', id: 11, center: { lat: 40.0, lon: -105.0 }, tags: { amenity: 'parking', access: 'yes' } },
+      { type: 'way', id: 12, center: { lat: 40.0, lon: -105.0 }, tags: { amenity: 'parking', access: 'customers' } },
+      { type: 'way', id: 13, center: { lat: 40.0, lon: -105.0 }, tags: { amenity: 'parking' } }, // store lot, probably
+      { type: 'way', id: 14, center: { lat: 40.0, lon: -105.0 }, tags: { amenity: 'parking', access: 'employees' } },
+    ],
+  }).map((s) => evaluate(s, origin, truck, margin));
+
+  it('shows only public places by default', () => {
+    assert.deepEqual(ids(applyFilters([...lots], DEFAULT_FILTERS)), ['osm:way/11']);
+  });
+
+  it('shows customer and unconfirmed lots when asked, but never employee lots', () => {
+    assert.deepEqual(ids(applyFilters([...lots], { ...DEFAULT_FILTERS, publicOnly: false })).sort(), ['osm:way/11', 'osm:way/12', 'osm:way/13']);
   });
 });
 

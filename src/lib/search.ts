@@ -8,6 +8,8 @@ import type { LatLng, ParkingSpot, SpotReport } from './types';
 export type SortOrder = 'distance' | 'best-fit' | 'free-first';
 
 export interface SearchFilters {
+  /** Show only places confirmed open to the public (hides customer-only and unconfirmed lots). */
+  publicOnly: boolean;
   /** Hide spots the vehicle is too tall for. */
   hideTooLow: boolean;
   /** Hide covered spots with no reported clearance. */
@@ -22,6 +24,7 @@ export interface SearchFilters {
 }
 
 export const DEFAULT_FILTERS: SearchFilters = {
+  publicOnly: true,
   hideTooLow: true,
   hideUnknown: false,
   freeOnly: false,
@@ -69,6 +72,9 @@ export function evaluate(
 
 export function applyFilters(results: SpotResult[], filters: SearchFilters): SpotResult[] {
   const filtered = results.filter(({ spot, fit }) => {
+    // Employee, resident and permit lots are never useful to a visiting driver.
+    if (spot.access === 'restricted') return false;
+    if (filters.publicOnly && spot.access !== 'public') return false;
     if (filters.hideTooLow && fit.status === 'too-low') return false;
     if (filters.hideUnknown && fit.status === 'unknown') return false;
     if (filters.freeOnly && spot.fee !== 'free') return false;
