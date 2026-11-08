@@ -22,3 +22,15 @@ Rules the build follows:
   the **lower** one.
 - When sources disagree, put the lowest clearance in the sheet and explain in `note`.
 - `listing` values are shown as "not verified"; prefer `sign` or `operator`.
+
+## Mapillary height-sign scan (tested November 2026)
+
+`scripts/mapillary-height-signs.ts` lists Mapillary-detected height signs
+near library garages, with photo links. Tested over Glendale to downtown LA
+(312 garages): 904 height signs, 25 detections near 7 garages, and **every
+one was a road sign** (freeway overpasses, street underpasses, a tunnel), not
+a garage entrance. Mapillary's detector recognizes the yellow diamond road
+warning (`warning--height-restriction--g2`) but not the clearance bars and
+rectangular signs garages use. So it isn't a source for garage clearances; it
+could later power "low bridge or tunnel near this spot" warnings for tall
+vehicles. Photos are CC BY-SA 4.0 (credit "© Mapillary contributors").

@@ -14,7 +14,10 @@ import { recordToElement, type ParkingTile } from '../src/lib/tiles';
 
 const COVERED = new Set(['garage', 'underground', 'rooftop', 'carport']);
 const MATCH_METERS = 60;
-const CELL = 0.09; // Mapillary allows at most 0.01 square degrees per query.
+// Mapillary allows at most 0.01 square degrees per query, and large areas
+// time out or come back partial, so the area is searched in small cells.
+const CELL = 0.02;
+const PARALLEL = 4;
 // Mapillary's class for height-restriction signs. An unknown class name makes
 // the API ignore the filter and return everything, so results are re-checked.
 const HEIGHT_SIGN = 'warning--height-restriction--g2';
@@ -31,21 +34,34 @@ async function mly<T>(path: string): Promise<T> {
   throw new Error(`Mapillary request failed: ${path}`);
 }
 
-async function signsIn(s: number, w: number, n: number, e: number): Promise<Sign[]> {
-  const out: Sign[] = [];
+async function signsIn(s: number, w: number, n: number, e: number): Promise<{ signs: Sign[]; failedCells: number }> {
+  const cells: string[] = [];
   for (let lat = s; lat < n; lat += CELL) {
     for (let lon = w; lon < e; lon += CELL) {
-      const bbox = [lon, lat, Math.min(lon + CELL, e), Math.min(lat + CELL, n)].map((v) => v.toFixed(5)).join(',');
-      const page = await mly<{ data: { id: string; object_value: string; geometry: { coordinates: [number, number] }; last_seen_at: string }[] }>(
-        `map_features?fields=id,object_value,geometry,last_seen_at&object_values=${HEIGHT_SIGN}&bbox=${bbox}&limit=2000`,
-      ).catch(() => ({ data: [] }));
-      for (const f of page.data) {
-        if (f.object_value !== HEIGHT_SIGN) continue;
-        out.push({ id: f.id, value: f.object_value, lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1], lastSeen: f.last_seen_at });
-      }
+      cells.push([lon, lat, Math.min(lon + CELL, e), Math.min(lat + CELL, n)].map((v) => v.toFixed(5)).join(','));
     }
   }
-  return out;
+  const signs = new Map<string, Sign>();
+  let failedCells = 0;
+  let next = 0;
+  const worker = async () => {
+    while (next < cells.length) {
+      const bbox = cells[next++];
+      try {
+        const page = await mly<{ data: { id: string; object_value: string; geometry: { coordinates: [number, number] }; last_seen_at: string }[] }>(
+          `map_features?fields=id,object_value,geometry,last_seen_at&object_values=${HEIGHT_SIGN}&bbox=${bbox}&limit=2000`,
+        );
+        for (const f of page.data) {
+          if (f.object_value !== HEIGHT_SIGN) continue;
+          signs.set(f.id, { id: f.id, value: f.object_value, lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1], lastSeen: f.last_seen_at });
+        }
+      } catch {
+        failedCells++;
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: PARALLEL }, worker));
+  return { signs: [...signs.values()], failedCells };
 }
 
 async function main() {
@@ -68,7 +84,7 @@ async function main() {
   const garages = parseOverpass({ elements }).filter((g) => COVERED.has(g.kind) && g.access !== 'restricted');
   const unknown = garages.filter((g) => g.clearance.status === 'unknown');
 
-  const signs = await signsIn(s, w, n, e);
+  const { signs, failedCells } = await signsIn(s, w, n, e);
   const rows: string[][] = [];
   for (const sign of signs) {
     const near = garages
@@ -90,7 +106,7 @@ async function main() {
     ]);
   }
 
-  console.log(`area: ${garages.length} garages (${unknown.length} with unknown clearance); ${signs.length} height signs detected; ${rows.length} near a garage`);
+  console.log(`area: ${garages.length} garages (${unknown.length} with unknown clearance); ${signs.length} height signs detected; ${rows.length} near a garage${failedCells ? `; ${failedCells} cells failed` : ''}`);
   for (const r of rows) console.log(' ', r.join(' | '));
   if (outFile) {
     const csv = [['osm_id', 'name', 'kind', 'clearance_now', 'meters_from_sign', 'sign', 'photo_date', 'photo'], ...rows]
