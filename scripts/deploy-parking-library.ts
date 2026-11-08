@@ -67,10 +67,10 @@ async function main() {
   const bundles = makeBundles(tileFiles);
   const published: Record<string, string> = JSON.parse((await read('_bundles.json')) ?? '{}');
   const oldManifest = JSON.parse((await read('manifest.json')) ?? 'null') as LibraryManifest | null;
-  // New areas first, then updates.
+  // New areas first, then updates; busiest areas (biggest bundles) first.
   const changed = [...bundles.entries()]
     .filter(([b, x]) => published[b] !== x.hash)
-    .sort(([a], [b]) => Number(a in published) - Number(b in published));
+    .sort(([a, x], [b, y]) => Number(a in published) - Number(b in published) || y.data.length - x.data.length);
   const toWrite = changed.slice(0, MAX_WRITES);
   console.log(`bundles: ${bundles.size}, changed: ${changed.length}, writing now: ${toWrite.length}`);
   if (DRY_RUN) return;

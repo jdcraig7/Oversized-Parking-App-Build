@@ -77,3 +77,15 @@ way/153299679,Monterey Cannery Row Garage,"6'10""",$15-$22 daily max (seasonal),
 way/19852386,Palo Alto Webster/Cowper Garage,"8'2""",,,yes,listing,https://en.parkopedia.com/parking/garage/webster_cowper_garage/94301/palo_alto,2026-11-08,
 way/1249652379,Santa Rosa Municipal Garage 9 (D Street),"7'0""",,,yes,listing,https://en.parkopedia.com/parking/garage/municipal_garage_9/95404/santa_rosa/,2026-11-08,97 D Street.
 way/240211885,Redwood City Marshall Street Garage,"8'2""",,,yes,listing,https://en.parkopedia.com/parking/garage/marshall_street_garage/94063/redwood_city/,2026-11-08,
+way/230575995,Grant Park South Garage (Chicago),"6'8""",,24/7,yes,operator,https://prod2.millenniumgarages.com/category/garages,2026-11-08,
+relation/15763840,SEA Airport Garage,"6'10""",,24/7,yes,operator,https://www.portseattle.org/sea-tac/parking/parking-information,2026-11-08,"Limit set by the skybridges. Taller vehicles: Over-height Vehicle Parking, an outdoor lot south of the garage (first come, first served)."
+way/30263664,PDX Short Term Parking Garage P1,"8'0""",,24/7,yes,operator,https://flypdx.com/parking,2026-11-08,For oversized vehicles call 503-460-4848.
+way/119010874,PDX Long Term Parking Garage P2,"8'0""",,24/7,yes,operator,https://flypdx.com/parking,2026-11-08,For oversized vehicles call 503-460-4848.
+way/939131821,PDX Long Term Parking Garage P3,"8'0""",,24/7,yes,operator,https://flypdx.com/parking,2026-11-08,For oversized vehicles call 503-460-4848.
+way/696919094,SLC Airport Parking Garage,"8'6""",,24/7,yes,operator,https://slcairport.com/parking-and-transportation/parking/parking-garage/,2026-11-08,No overnight parking on Level 2.
+way/69201801,MSP Quick-Ride Ramp,"9'10""",,24/7,yes,operator,https://www.mspairport.com/node/2146,2026-11-08,The tallest option at MSP Terminal 1.
+way/1554794809,MSP Terminal 1 Green Daily Parking Ramp,"7'0""",,24/7,yes,operator,https://www.mspairport.com/node/2146,2026-11-08,"Taller vehicles: Quick-Ride Ramp (9'10"")."
+way/1554794811,MSP Terminal 1 Gold Parking Ramp,"7'0""",,24/7,yes,operator,https://www.mspairport.com/node/2146,2026-11-08,"Taller vehicles: Quick-Ride Ramp (9'10"")."
+way/35110644,MSP Terminal 1 Blue Daily Parking Ramp,"7'0""",,24/7,yes,operator,https://www.mspairport.com/node/2146,2026-11-08,"Taller vehicles: Quick-Ride Ramp (9'10"")."
+way/114900346,MSP Terminal 1 Red Daily Parking Ramp,"7'0""",,24/7,yes,operator,https://www.mspairport.com/node/2146,2026-11-08,"Taller vehicles: Quick-Ride Ramp (9'10"")."
+way/987247763,MSP Terminal 1 Silver Parking Ramp,"7'0""",,24/7,yes,operator,https://www.mspairport.com/node/2146,2026-11-08,"Taller vehicles: Quick-Ride Ramp (9'10"")."
