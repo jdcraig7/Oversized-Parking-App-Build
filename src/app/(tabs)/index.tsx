@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -21,6 +22,7 @@ import { AdBanner } from '../../ads/AdBanner';
 import { SHOW_SPONSORS_TO_PRO } from '../../config';
 import { distanceMeters, isInUnitedStates, METERS_PER_MILE } from '../../lib/geo';
 import { formatFeetInches } from '../../lib/height';
+import { vehicleTypeInfo } from '../../lib/vehicles';
 import { applyFilters, evaluate, summarize, type SearchFilters, type SortOrder } from '../../lib/search';
 import { listingToSpot, pickSponsored, sponsorSpotId, type SponsoredListing, type SponsorPick } from '../../lib/sponsors';
 import type { LatLng, ParkingSpot } from '../../lib/types';
@@ -47,7 +49,11 @@ const NO_LISTINGS: SponsoredListing[] = [];
 const SPONSOR_SELECTED = '__sponsor__';
 
 export default function SearchScreen() {
-  const { settings, updateSettings, reports } = useAppState();
+  const { settings, updateSettings, reports, activeVehicle, selectVehicle } = useAppState();
+
+  // One tap to switch between the vehicles in My garage.
+  const [showVehicles, setShowVehicles] = useState(false);
+  const switchVehicle = () => (settings.vehicles.length < 2 ? router.push('/settings') : setShowVehicles((s) => !s));
   const { filters } = settings;
   const community = useCommunity();
   const { load: loadCommunity } = community;
@@ -286,14 +292,31 @@ export default function SearchScreen() {
       </View>
 
       {/* Vehicle summary */}
-      <Pressable style={styles.vehicleBar} onPress={() => router.push('/settings')} accessibilityRole="button">
-        <Ionicons name="car-sport" size={18} color={colors.primary} />
+      <Pressable style={styles.vehicleBar} onPress={switchVehicle} accessibilityRole="button" accessibilityHint="Switch vehicle">
+        <MaterialCommunityIcons name={vehicleTypeInfo(activeVehicle.type).icon as never} size={20} color={colors.primary} />
         <Text style={styles.vehicleText}>
           {settings.vehicleName}: <Text style={{ fontWeight: '800' }}>{formatFeetInches(settings.vehicleMeters)}</Text>
           {settings.marginMeters > 0 ? ` + ${formatFeetInches(settings.marginMeters)} margin` : ''}
         </Text>
-        <Text style={styles.vehicleEdit}>Change</Text>
+        <Text style={styles.vehicleEdit}>{settings.vehicles.length > 1 ? 'Switch' : 'Change'}</Text>
       </Pressable>
+
+      {showVehicles && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={{ flexGrow: 0 }}>
+          {settings.vehicles.map((v) => (
+            <Chip
+              key={v.id}
+              label={`${v.name} · ${formatFeetInches(v.heightMeters)}`}
+              active={v.id === settings.activeVehicleId}
+              onPress={() => {
+                selectVehicle(v.id);
+                setShowVehicles(false);
+              }}
+            />
+          ))}
+          <Chip label="My garage" icon="settings-outline" onPress={() => router.push('/settings')} />
+        </ScrollView>
+      )}
 
       {/* Filters */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={{ flexGrow: 0 }}>

@@ -24,6 +24,7 @@ export default function ReportScreen() {
   const [clearance, setClearance] = useState(startHeight);
   const [price, setPrice] = useState(existing?.price ?? '');
   const [note, setNote] = useState(existing?.note ?? '');
+  const [phone, setPhone] = useState(existing?.phone ?? '');
   const [shared, setShared] = useState(existing?.shared ?? true);
 
   // Network work runs in the background; reports made offline are queued and sent later.
@@ -35,6 +36,7 @@ export default function ReportScreen() {
       clearanceMeters: hasClearance ? clearance : undefined,
       price: price.trim() || undefined,
       note: note.trim() || undefined,
+      phone: phone.trim() || undefined,
       shared: community.enabled && shared,
       updatedAt: new Date().toISOString(),
     };
@@ -69,6 +71,18 @@ export default function ReportScreen() {
 
         <SectionTitle>Price</SectionTitle>
         <TextInput value={price} onChangeText={setPrice} placeholder="e.g. $4/hr, $18 daily max, free after 6pm" placeholderTextColor={colors.muted} style={styles.input} />
+
+        <SectionTitle>Phone number (optional)</SectionTitle>
+        <TextInput
+          value={phone}
+          onChangeText={setPhone}
+          placeholder="e.g. (213) 555-0100"
+          placeholderTextColor={colors.muted}
+          keyboardType="phone-pad"
+          textContentType="telephoneNumber"
+          style={styles.input}
+          accessibilityLabel="Phone number"
+        />
 
         <SectionTitle>Note (optional)</SectionTitle>
         <TextInput

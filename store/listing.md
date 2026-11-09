@@ -3,6 +3,8 @@
 Copy for App Store Connect and Google Play Console. Character limits noted;
 everything below fits them.
 
+Support email (both stores): jdcraig7@gmail.com
+
 Privacy policy URL (both stores):
 https://oversized-parking-library.oversized-parking-17bb38.workers.dev/privacy
 
@@ -46,11 +48,20 @@ FIND PARKING THAT ACTUALLY WORKS
 HEIGHTS YOU CAN TRUST
 Clearances come from OpenStreetMap, our own research of operator and city websites, and drivers like you. Every researched height links to its source. If you know a clearance, share it in seconds — your report helps the next driver.
 
+MY GARAGE: EVERY VEHICLE YOU DRIVE
+Add your pickup, van, RV or truck-and-trailer with its height and length, and switch between them in one tap. Results re-check instantly.
+
+PLAN TRIPS AHEAD
+Line up the garages and lots you'll stay at, in order, with nights at each. See your dates, which stops fit the vehicle you're taking, and get directions for the whole route.
+
+CALL AHEAD
+Garage phone numbers where available, one-tap calling, and a quick search when a number isn't on record.
+
 SAVE YOUR GO-TO SPOTS
 Save garages and lots you use, add your own notes, and find them again fast.
 
 OVERSIZED PRO — ONE PAYMENT, NO SUBSCRIPTION
-Free with ads. Upgrade once to remove ads and save unlimited spots.
+Free with ads. Upgrade once to remove ads and get unlimited vehicles, trips and saved spots.
 
 Always check the posted clearance sign before you enter. Heights can change and signs can be wrong.
 

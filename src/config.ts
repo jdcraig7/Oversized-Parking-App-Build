@@ -9,7 +9,7 @@ const env: Record<string, string | undefined> = process.env;
 export const APP_NAME = 'Oversized Parking';
 
 /** Identifies the app to OpenStreetMap services, as their usage policies require. */
-export const USER_AGENT = `OversizedParkingApp/${Constants.expoConfig?.version ?? '1.0.0'} (${env.EXPO_PUBLIC_CONTACT_EMAIL ?? 'support@example.com'})`;
+export const USER_AGENT = `OversizedParkingApp/${Constants.expoConfig?.version ?? '1.0.0'} (+https://oversized-parking-library.oversized-parking-17bb38.workers.dev/privacy)`;
 
 /**
  * Our own parking library: static tiles built by scripts/build-parking-library.sh
@@ -53,6 +53,10 @@ export const PRO_ENTITLEMENT = 'pro';
 export const FALLBACK_PRO_PRICE = '$14.99';
 
 /** Free users can save this many spots; Pro is unlimited. */
+/** Vehicles in My garage without Pro. */
+export const FREE_VEHICLE_LIMIT = 2;
+/** Trips without Pro (each can have any number of stops). */
+export const FREE_TRIP_LIMIT = 1;
 export const FREE_SAVED_LIMIT = 10;
 
 /**
@@ -79,4 +83,4 @@ export const INTERSTITIAL_EVERY_N_VIEWS = 6;
 export const INTERSTITIAL_MIN_INTERVAL_MS = 4 * 60 * 1000;
 
 export const PRIVACY_POLICY_URL = env.EXPO_PUBLIC_PRIVACY_POLICY_URL ?? `${PARKING_LIBRARY_URL}/privacy`;
-export const SUPPORT_EMAIL = env.EXPO_PUBLIC_CONTACT_EMAIL ?? 'support@example.com';
+export const SUPPORT_EMAIL = env.EXPO_PUBLIC_CONTACT_EMAIL ?? 'jdcraig7@gmail.com';

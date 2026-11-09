@@ -12,6 +12,7 @@ clearances and prices. Every weekly library build merges these files in.
 | `clearance` | As posted: `6'8"`, `7' 2"`, `2.1` (meters). Leave empty if unknown. |
 | `price` | Short rate text, e.g. `$3/hr; $15 daily max`. |
 | `hours` | `24/7`, or OpenStreetMap opening-hours style like `Mo-Fr 06:00-22:00`. |
+| `phone` | The garage's or operator's public number, e.g. `503-460-4848`. Used when the map has none. |
 | `access` | Optional: `yes` when the source confirms anyone can park (paid public parking), `customers` for customer-only. |
 | `source` | `sign` (photo of the posted sign), `operator` (the garage's or city's own site), or `listing` (third-party site such as ParkMe, ParkWhiz, Apple Maps). |
 | `source_url` | Where it came from. |

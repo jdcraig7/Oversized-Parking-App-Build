@@ -4,18 +4,20 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { guessType } from '../lib/vehicles';
 import { useAppState } from '../state/AppState';
 import { Button } from '../ui/components';
 import { HeightPicker } from '../ui/HeightPicker';
 import { colors } from '../ui/theme';
 
 export default function OnboardingScreen() {
-  const { settings, updateSettings } = useAppState();
+  const { settings, updateSettings, saveVehicle, activeVehicle } = useAppState();
   const [meters, setMeters] = useState(settings.vehicleMeters);
   const [name, setName] = useState(settings.vehicleName);
 
   const done = () => {
-    updateSettings({ vehicleMeters: meters, vehicleName: name, onboarded: true });
+    saveVehicle({ ...activeVehicle, name: name || 'My vehicle', type: guessType(name), heightMeters: meters });
+    updateSettings({ onboarded: true });
     router.back();
   };
 
@@ -31,7 +33,7 @@ export default function OnboardingScreen() {
         </View>
         <HeightPicker meters={meters} onChange={setMeters} onPreset={setName} />
         <Button title="Start finding parking" icon="arrow-forward" onPress={done} style={{ marginTop: 28 }} />
-        <Text style={styles.small}>You can change this anytime on the Vehicle tab.</Text>
+        <Text style={styles.small}>You can add more vehicles anytime in My garage.</Text>
       </ScrollView>
     </SafeAreaView>
   );

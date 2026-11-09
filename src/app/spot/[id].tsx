@@ -62,6 +62,13 @@ export default function SpotScreen() {
   const report = reports[spot.id];
   const drivers = community.summaries[spot.id];
   const { clearance, source } = resolveClearance(spot, report, drivers);
+  const phone = spot.phone ?? report?.phone;
+  const call = () => Linking.openURL(`tel:${phone!.replace(/[^\d+]/g, '')}`);
+  // No number on record: search the web for it (name + address).
+  const findPhone = () =>
+    Linking.openURL(
+      `https://www.google.com/search?q=${encodeURIComponent(`${spot.unnamed ? 'parking' : spot.name} ${spot.address ?? `${spot.latitude.toFixed(4)},${spot.longitude.toFixed(4)}`} phone`)}`,
+    );
   const price = resolvePrice(spot, report, drivers);
   const fit = checkFit(clearance, settings.vehicleMeters, settings.marginMeters);
   const fitStyle = fitColors[fit.status];
@@ -173,8 +180,8 @@ export default function SpotScreen() {
           </Text>
           {clearance.status === 'unknown' && !sponsorOnly && (
             <View style={styles.unknownActions}>
-              {!!spot.phone && (
-                <Button title="Call to ask" icon="call-outline" variant="secondary" onPress={() => Linking.openURL(`tel:${spot.phone!.replace(/[^\d+]/g, '')}`)} style={{ flex: 1 }} />
+              {!!phone && (
+                <Button title="Call to ask" icon="call-outline" variant="secondary" onPress={call} style={{ flex: 1 }} />
               )}
               <Button title="I know the clearance" icon="create-outline" variant="secondary" onPress={() => router.push({ pathname: '/report/[id]', params: { id: spot.id } })} style={{ flex: 1 }} />
             </View>
@@ -190,6 +197,14 @@ export default function SpotScreen() {
           <Button title="Directions" icon="navigate" onPress={directions} style={{ flex: 1 }} />
           <Button title={savedNow ? 'Saved' : 'Save'} icon={savedNow ? 'bookmark' : 'bookmark-outline'} variant="secondary" onPress={toggleSave} style={{ flex: 1 }} />
           <Button title="" accessibilityLabel="Share" icon="share-outline" variant="secondary" onPress={share} style={{ width: 52 }} />
+        </View>
+        <View style={[styles.actions, { marginTop: 8 }]}>
+          <Button title="Add to trip" icon="map-outline" variant="secondary" onPress={() => router.push({ pathname: '/trip/choose', params: { spotId: spot.id } })} style={{ flex: 1 }} />
+          {phone ? (
+            <Button title="Call" icon="call-outline" variant="secondary" onPress={call} style={{ flex: 1 }} />
+          ) : (
+            <Button title="Find phone" icon="search-outline" variant="secondary" onPress={findPhone} style={{ flex: 1 }} />
+          )}
         </View>
 
         <SectionTitle>Price & hours</SectionTitle>
@@ -223,7 +238,15 @@ export default function SpotScreen() {
           <InfoRow icon="star-outline" label="Features" value={spot.amenities.length ? spot.amenities.join(' · ') : undefined} />
           <InfoRow icon="document-text-outline" label="Notes" value={spot.description} />
           <InfoRow icon="chatbubble-outline" label="Your note" value={report?.note} />
-          {spot.phone && <Button title={`Call ${spot.phone}`} icon="call-outline" variant="secondary" onPress={() => Linking.openURL(`tel:${spot.phone!.replace(/[^\d+]/g, '')}`)} style={{ marginTop: 8 }} />}
+          <InfoRow icon="call-outline" label="Phone" value={phone ? `${phone}${!spot.phone ? ' (you added)' : ''}` : 'Not on record'} />
+          {phone ? (
+            <Button title={`Call ${phone}`} icon="call-outline" variant="secondary" onPress={call} style={{ marginTop: 8 }} />
+          ) : (
+            <View style={[styles.actions, { marginTop: 8 }]}>
+              <Button title="Search for number" icon="search-outline" variant="secondary" onPress={findPhone} style={{ flex: 1 }} />
+              <Button title="Add number" icon="add" variant="secondary" onPress={() => router.push({ pathname: '/report/[id]', params: { id: spot.id } })} style={{ flex: 1 }} />
+            </View>
+          )}
           {spot.website && <Button title="Website" icon="globe-outline" variant="secondary" onPress={() => Linking.openURL(spot.website!)} style={{ marginTop: 8 }} />}
         </Card>
 

@@ -141,6 +141,7 @@ export function researchPlaces(file: string): TileRecord[] {
     put('opening_hours', row.hours);
     put('access', row.access);
     put('operator', row.operator);
+    put('phone', row.phone);
     put('research:url', row.source_url);
     put('research:checked', row.checked);
     put('research:note', row.note);
@@ -171,6 +172,8 @@ function applyResearch(records: Map<string, TileRecord>, dir: string): [number, 
       }
       if (row.price) tags.charge = row.price;
       if (row.hours) tags.opening_hours = row.hours;
+      // A number from our research fills in when the map has none.
+      if (row.phone && !tags.phone && !tags['contact:phone']) tags.phone = row.phone;
       // A source can confirm public access (e.g. an operator's page for paid parking).
       if (row.access) tags.access = row.access;
       tags['research:source'] = row.source;

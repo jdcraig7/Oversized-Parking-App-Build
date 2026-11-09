@@ -30,10 +30,18 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="trips"
+        options={{
+          title: 'Trips',
+          tabBarLabel: 'Trips',
+          tabBarIcon: ({ color, size }) => <Ionicons name="map" color={color as string} size={size} />,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
-          title: 'My vehicle & settings',
-          tabBarLabel: 'Vehicle',
+          title: 'My garage & settings',
+          tabBarLabel: 'Garage',
           tabBarIcon: ({ color, size }) => <Ionicons name="car-sport" color={color as string} size={size} />,
         }}
       />

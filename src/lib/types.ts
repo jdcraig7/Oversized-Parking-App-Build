@@ -82,6 +82,8 @@ export interface SpotReport {
   clearanceMeters?: number;
   price?: string;
   note?: string;
+  /** A phone number the driver found (kept on this phone). */
+  phone?: string;
   /** Also shared with other drivers (when shared reports are set up). */
   shared?: boolean;
   updatedAt: string;

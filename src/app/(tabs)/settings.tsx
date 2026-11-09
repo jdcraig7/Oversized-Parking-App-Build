@@ -1,19 +1,30 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
-import { PRIVACY_POLICY_URL, SUPPORT_EMAIL } from '../../config';
+import { FREE_VEHICLE_LIMIT, PRIVACY_POLICY_URL, SUPPORT_EMAIL } from '../../config';
 import { feetInchesToMeters, formatFeetInches, metersToTotalInches } from '../../lib/height';
-import { MARGIN_OPTIONS, RADIUS_OPTIONS } from '../../lib/vehicles';
+import { MARGIN_OPTIONS, RADIUS_OPTIONS, vehicleTypeInfo } from '../../lib/vehicles';
 import { useAppState } from '../../state/AppState';
 import { usePro } from '../../state/Pro';
 import { Button, Card, Chip, SectionTitle } from '../../ui/components';
-import { HeightPicker } from '../../ui/HeightPicker';
-import { colors, radius } from '../../ui/theme';
+import { colors } from '../../ui/theme';
 
 export default function SettingsScreen() {
-  const { settings, updateSettings } = useAppState();
+  const { settings, updateSettings, selectVehicle } = useAppState();
   const pro = usePro();
+
+  const addVehicle = () => {
+    if (!pro.isPro && settings.vehicles.length >= FREE_VEHICLE_LIMIT) {
+      Alert.alert('My garage is full', `Free accounts can keep ${FREE_VEHICLE_LIMIT} vehicles. Go Pro for unlimited vehicles, trips and saved spots, with no ads.`, [
+        { text: 'Not now', style: 'cancel' },
+        { text: 'Go Pro', onPress: () => router.push('/upgrade') },
+      ]);
+      return;
+    }
+    router.push({ pathname: '/vehicle/[id]', params: { id: 'new' } });
+  };
 
   const restore = async () => {
     try {
@@ -30,7 +41,7 @@ export default function SettingsScreen() {
       {pro.isPro ? (
         <Card style={styles.proCard}>
           <Ionicons name="star" size={22} color={colors.accent} />
-          <Text style={styles.proText}>Pro unlocked. No ads, unlimited saved spots. Thank you!</Text>
+          <Text style={styles.proText}>Pro unlocked. No ads, unlimited vehicles, trips and saved spots. Thank you!</Text>
         </Card>
       ) : (
         <Pressable onPress={() => router.push('/upgrade')} accessibilityRole="button">
@@ -38,24 +49,51 @@ export default function SettingsScreen() {
             <Ionicons name="star" size={22} color={colors.accent} />
             <View style={{ flex: 1 }}>
               <Text style={styles.proTitle}>Go Pro: {pro.price} once, forever</Text>
-              <Text style={styles.proText}>Remove ads and save unlimited spots.</Text>
+              <Text style={styles.proText}>No ads, plus unlimited vehicles, trips and saved spots.</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.muted} />
           </Card>
         </Pressable>
       )}
 
-      <SectionTitle>Vehicle</SectionTitle>
-      <Card style={{ gap: 14 }}>
-        <TextInput
-          value={settings.vehicleName}
-          onChangeText={(vehicleName) => updateSettings({ vehicleName })}
-          placeholder="Vehicle name"
-          placeholderTextColor={colors.muted}
-          style={styles.input}
-          accessibilityLabel="Vehicle name"
-        />
-        <HeightPicker meters={settings.vehicleMeters} onChange={(vehicleMeters) => updateSettings({ vehicleMeters })} />
+      <SectionTitle>My garage</SectionTitle>
+      <Card style={{ gap: 4, paddingVertical: 6 }}>
+        {settings.vehicles.map((v) => {
+          const active = v.id === settings.activeVehicleId;
+          return (
+            <View key={v.id} style={styles.vehicleRow}>
+              <Pressable
+                style={styles.vehicleMain}
+                onPress={() => selectVehicle(v.id)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={`${v.name}, ${formatFeetInches(v.heightMeters)}${active ? ', in use' : ''}`}
+              >
+                <MaterialCommunityIcons name={vehicleTypeInfo(v.type).icon as never} size={28} color={active ? colors.primary : colors.muted} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.vehicleName, active && { color: colors.primary }]} numberOfLines={1}>
+                    {v.name}
+                  </Text>
+                  <Text style={styles.vehicleMeta}>
+                    {formatFeetInches(v.heightMeters)} tall{v.lengthFeet ? ` · ${v.lengthFeet} ft long` : ''}
+                  </Text>
+                </View>
+                <Ionicons name={active ? 'radio-button-on' : 'radio-button-off'} size={22} color={active ? colors.primary : colors.border} />
+              </Pressable>
+              <Pressable
+                onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: v.id } })}
+                style={styles.editBtn}
+                accessibilityRole="button"
+                accessibilityLabel={`Edit ${v.name}`}
+                hitSlop={8}
+              >
+                <Ionicons name="create-outline" size={20} color={colors.primary} />
+              </Pressable>
+            </View>
+          );
+        })}
+        <Button title="Add a vehicle" icon="add" variant="secondary" onPress={addVehicle} style={{ marginVertical: 8 }} />
+        <Text style={styles.small}>Tap a vehicle to search with it. Every result is checked against its height.</Text>
       </Card>
 
       <SectionTitle>Safety margin</SectionTitle>
@@ -115,7 +153,11 @@ const styles = StyleSheet.create({
   proCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#FFFBEB', borderColor: '#FCD34D' },
   proTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
   proText: { fontSize: 14, color: colors.text, flexShrink: 1 },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius, padding: 12, fontSize: 16, color: colors.text },
+  vehicleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+  vehicleMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
+  vehicleName: { fontSize: 16, fontWeight: '700', color: colors.text },
+  vehicleMeta: { fontSize: 13, color: colors.muted, marginTop: 2 },
+  editBtn: { padding: 8 },
   body: { fontSize: 14, color: colors.text, lineHeight: 20, flexShrink: 1 },
   small: { fontSize: 12, color: colors.muted, textAlign: 'center', marginTop: 4 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
