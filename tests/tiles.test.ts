@@ -135,3 +135,16 @@ describe('bundles', () => {
     assert.equal(worker.tileFromBundle(ab, '144/-474'), null);
   });
 });
+
+describe('Overpass states (Alaska, Hawaii)', () => {
+  it('writes features with the same ids osmium uses', async () => {
+    const { toFeatureLine } = await import('../scripts/fetch-overpass-states');
+    const { osmIdOf } = await import('../scripts/build-parking-library');
+    const rel = JSON.parse(toFeatureLine({ type: 'relation', id: 1731545, center: { lat: 61.2, lon: -149.9 }, tags: { amenity: 'parking' } })!);
+    assert.deepEqual(osmIdOf(rel.id), ['r', 1731545]);
+    assert.deepEqual(rel.geometry, { type: 'Point', coordinates: [-149.9, 61.2] });
+    const way = JSON.parse(toFeatureLine({ type: 'way', id: 5, center: { lat: 21.3, lon: -157.8 }, tags: { amenity: 'parking' } })!);
+    assert.deepEqual(osmIdOf(way.id), ['w', 5]);
+    assert.equal(toFeatureLine({ type: 'node', id: 1, lat: 1, lon: 2 }), null); // no tags
+  });
+});

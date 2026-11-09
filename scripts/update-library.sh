@@ -49,6 +49,14 @@ updated=$(sort us-*.date 2>/dev/null | head -1)
 [ -n "$updated" ] || updated=$(date -u +%F)
 osmium export us.parking.pbf -f geojsonseq --add-unique-id=type_id -o us.geojsonseq --overwrite
 
+# Alaska and Hawaii aren't on the extract mirror; fetch them from Overpass.
+# Best effort: if Overpass refuses, the deploy keeps last week's AK/HI tiles.
+if (cd "$repo" && npx tsx scripts/fetch-overpass-states.ts "$work/ak-hi.geojsonseq" US-AK US-HI); then
+  cat ak-hi.geojsonseq >> us.geojsonseq
+else
+  echo "warning: Alaska/Hawaii not fetched this time (Overpass unavailable); keeping what's published"
+fi
+
 rm -rf library && mkdir library
 cd "$repo"
 npx tsx scripts/build-parking-library.ts "$work/us.geojsonseq" "$work/library" "$updated"

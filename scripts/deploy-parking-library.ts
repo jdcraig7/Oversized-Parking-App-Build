@@ -113,6 +113,17 @@ async function main() {
       }
     }
   }
+  // Areas published before but missing from this build (e.g. a source that
+  // failed this week) stay as they are rather than vanishing.
+  if (oldManifest) {
+    for (const [t, n] of Object.entries(oldManifest.tiles)) {
+      const b = bundleKeyOf(t);
+      if (!bundles.has(b) && published[b]) {
+        manifest.tiles[t] = n;
+        manifest.hashes![t] = published[b];
+      }
+    }
+  }
   manifest.total = Object.values(manifest.tiles).reduce((a, n) => a + n, 0);
   const finalWrites = [
     { key: '_bundles.json', value: JSON.stringify(published) },
