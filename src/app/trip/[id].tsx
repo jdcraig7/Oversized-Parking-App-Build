@@ -5,11 +5,14 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { METERS_PER_MILE } from '../../lib/geo';
 import { formatFeetInches } from '../../lib/height';
 import { evaluate } from '../../lib/search';
-import { dayLabel, isoDay, legs, moveStop, routeUrl, schedule, totalNights, type Trip, type TripStop } from '../../lib/trips';
+import { dayLabel, isoDay, legs, moveStop, routeUrl, schedule, totalNights, tripShareText, type Trip, type TripStop } from '../../lib/trips';
+import { blockingClearances, type LowClearance } from '../../lib/nearby';
+import { downloadForOffline, nearbyFor, offlineStatus } from '../../services/parkingApi';
 import { useAppState } from '../../state/AppState';
 import { useCommunity } from '../../state/Community';
 import { Button, Card, Chip, FitBadge, SectionTitle } from '../../ui/components';
@@ -25,6 +28,37 @@ export default function TripScreen() {
   const [name, setName] = useState(trip?.name ?? '');
 
   const stopIds = trip?.stops.map((s) => s.spot.id).join(',') ?? '';
+  const [offline, setOffline] = useState<{ saved: number; total: number } | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
+  // Low clearances near each stop (from library tiles), checked below against the trip's vehicle.
+  const [lowNear, setLowNear] = useState<Record<string, LowClearance[]>>({});
+  const radius = settings.radiusMiles * METERS_PER_MILE;
+  const stopPoints = trip?.stops.map((s) => ({ latitude: s.spot.latitude, longitude: s.spot.longitude })) ?? [];
+  const pointsKey = stopPoints.map((p) => `${p.latitude},${p.longitude}`).join('|');
+  useEffect(() => {
+    let live = true;
+    if (pointsKey) {
+      const pts = pointsKey.split('|').map((s) => ({ latitude: Number(s.split(',')[0]), longitude: Number(s.split(',')[1]) }));
+      offlineStatus(pts, radius).then((s) => live && setOffline(s));
+    }
+    return () => {
+      live = false;
+    };
+  }, [pointsKey, radius]);
+  useEffect(() => {
+    let live = true;
+    (async () => {
+      for (const s of pointsKey ? pointsKey.split('|') : []) {
+        const [lat, lon] = s.split(',').map(Number);
+        const n = await nearbyFor({ latitude: lat, longitude: lon }, METERS_PER_MILE);
+        if (!live) return;
+        if (n) setLowNear((prev) => ({ ...prev, [s]: n.lowClearances }));
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, [pointsKey]);
   useEffect(() => {
     if (stopIds) load(stopIds.split(','));
   }, [stopIds, load]);
@@ -32,9 +66,10 @@ export default function TripScreen() {
   const vehicle = settings.vehicles.find((v) => v.id === trip?.vehicleId) ?? settings.vehicles.find((v) => v.id === settings.activeVehicleId);
   const vehicleMeters = vehicle?.heightMeters ?? settings.vehicleMeters;
   // The React Compiler memoizes this; no useMemo needed.
-  const fits = (trip?.stops ?? []).map(
-    (s) => evaluate(s.spot, s.spot, vehicleMeters, settings.marginMeters, reports[s.spot.id], summaries[s.spot.id]).fit,
+  const results = (trip?.stops ?? []).map((s) =>
+    evaluate(s.spot, s.spot, vehicleMeters, settings.marginMeters, reports[s.spot.id], summaries[s.spot.id], vehicle?.lengthFeet),
   );
+  const fits = results.map((r) => r.fit);
 
   if (!trip) {
     return (
@@ -50,7 +85,7 @@ export default function TripScreen() {
   const setStop = (i: number, patch: Partial<TripStop>) => setStops(trip.stops.map((s, j) => (j === i ? { ...s, ...patch } : s)));
   const dates = schedule(trip);
   const nights = totalNights(trip);
-  const tooLow = fits.filter((f) => f.status === 'too-low').length;
+  const tooLow = results.filter((r) => r.fit.status === 'too-low' || r.tooLong).length;
 
   const pickDate = () => {
     const value = trip.startDate ? new Date(`${trip.startDate}T12:00:00`) : new Date();
@@ -76,6 +111,23 @@ export default function TripScreen() {
       ],
     );
   };
+
+  const saveOffline = async () => {
+    setDownloading('Starting…');
+    try {
+      const n = await downloadForOffline(stopPoints, radius, (done, total) => setDownloading(`Saving ${done} of ${total} areas…`));
+      setOffline({ saved: n, total: n });
+    } catch (e) {
+      Alert.alert('Couldn’t save for offline', e instanceof Error ? e.message : 'Please try again with a connection.');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const share = () =>
+    Share.share({
+      message: tripShareText(trip, vehicle ? { name: vehicle.name, height: formatFeetInches(vehicle.heightMeters) } : undefined),
+    }).catch(() => {});
 
   const remove = () =>
     Alert.alert(`Delete ${trip.name}?`, 'Its stops stay in Saved if you saved them.', [
@@ -142,7 +194,7 @@ export default function TripScreen() {
         </Text>
         {tooLow > 0 && (
           <Text style={styles.warn}>
-            {tooLow} {tooLow === 1 ? 'stop is' : 'stops are'} too low for this vehicle.
+            {tooLow} {tooLow === 1 ? 'stop is' : 'stops are'} too low or too short for this vehicle.
           </Text>
         )}
       </Card>
@@ -183,6 +235,18 @@ export default function TripScreen() {
             </Pressable>
             <FitBadge fit={fits[i]} />
           </View>
+          {(() => {
+            const near = lowNear[`${s.spot.latitude},${s.spot.longitude}`];
+            const n = near ? blockingClearances(near, vehicleMeters, settings.marginMeters, METERS_PER_MILE).length : 0;
+            return n ? (
+              <Pressable onPress={() => router.push({ pathname: '/spot/[id]', params: { id: s.spot.id } })} style={styles.row} accessibilityRole="button">
+                <Ionicons name="warning" size={16} color="#B91C1C" />
+                <Text style={styles.warnSmall}>
+                  {n} low {n === 1 ? 'bridge or barrier' : 'bridges or barriers'} within 1 mi. Tap for details.
+                </Text>
+              </Pressable>
+            ) : null;
+          })()}
           <View style={styles.stopTools}>
             <View style={styles.stepper}>
               <IconBtn icon="remove" label="Fewer nights" onPress={() => setStop(i, { nights: Math.max(0, s.nights - 1) })} />
@@ -208,6 +272,27 @@ export default function TripScreen() {
 
       <View style={{ gap: 10, marginTop: 16 }}>
         {trip.stops.length > 0 && <Button title="Directions for the whole trip" icon="navigate" onPress={directions} />}
+        {trip.stops.length > 0 && <Button title="Share trip" icon="share-outline" variant="secondary" onPress={share} />}
+        {trip.stops.length > 0 && (
+          <Card style={{ gap: 8 }}>
+            <View style={styles.row}>
+              <Ionicons
+                name={offline && offline.total > 0 && offline.saved === offline.total ? 'cloud-done-outline' : 'cloud-download-outline'}
+                size={20}
+                color={colors.primary}
+              />
+              <Text style={[styles.body, { flex: 1 }]}>
+                {downloading ??
+                  (offline && offline.total > 0 && offline.saved === offline.total
+                    ? 'Saved for offline. Search works around every stop without signal.'
+                    : `Save parking within ${settings.radiusMiles} mi of each stop so it works without signal.`)}
+              </Text>
+            </View>
+            {!(offline && offline.total > 0 && offline.saved === offline.total) && (
+              <Button title="Save for offline" icon="download-outline" variant="secondary" onPress={saveOffline} disabled={!!downloading} />
+            )}
+          </Card>
+        )}
         <Button title="Add from saved spots" icon="bookmark-outline" variant="secondary" onPress={() => router.push({ pathname: '/trip/add', params: { tripId: trip.id } })} />
         <Button title="Find parking to add" icon="search" variant="secondary" onPress={() => router.navigate('/')} />
         <Button title="Delete trip" icon="trash-outline" variant="secondary" onPress={remove} />
@@ -240,6 +325,7 @@ const styles = StyleSheet.create({
   body: { fontSize: 15, color: colors.text, lineHeight: 21 },
   small: { fontSize: 13, color: colors.muted },
   warn: { fontSize: 14, color: '#B91C1C', fontWeight: '700' },
+  warnSmall: { flex: 1, fontSize: 13, color: '#B91C1C', fontWeight: '700' },
   dateBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius, backgroundColor: colors.bg },
   dateText: { fontSize: 15, fontWeight: '700', color: colors.primary },
   stop: { gap: 10 },

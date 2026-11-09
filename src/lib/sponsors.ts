@@ -92,6 +92,7 @@ export function listingToSpot(l: SponsoredListing, fetchedAt = new Date().toISOS
     hours: l.hours,
     access: 'public',
     truckFriendly: false,
+    rvFriendly: false,
     covered: l.clearance.status !== 'open',
     address: l.address,
     phone: l.phone,

@@ -5,10 +5,11 @@ import { Alert, Linking, Platform, ScrollView, Share, StyleSheet, Text, View } f
 
 import { onSpotViewed } from '../../ads/ads';
 import { AdBanner } from '../../ads/AdBanner';
-import { FREE_SAVED_LIMIT, SHOW_SPONSORS_TO_PRO } from '../../config';
+import { BOOKING_LINKS, FREE_SAVED_LIMIT, SHOW_SPONSORS_TO_PRO } from '../../config';
 import { resolveClearance, resolvePrice } from '../../lib/community';
 import { checkFit, describeFit, formatFeetInches } from '../../lib/height';
 import { kindLabel } from '../../lib/osm';
+import { overnightBlocked } from '../../lib/search';
 import type { ParkingSpot } from '../../lib/types';
 import { getCachedSpot } from '../../services/parkingApi';
 import { getCachedListing, listingForSpot } from '../../services/sponsors';
@@ -17,6 +18,8 @@ import { useCommunity } from '../../state/Community';
 import { usePro } from '../../state/Pro';
 import { Button, Card, clearanceText, FeeBadge, InfoRow, KIND_ICONS, SectionTitle, type IconName } from '../../ui/components';
 import { MiniMap } from '../../ui/MiniMap';
+import { NearbyCard } from '../../ui/NearbyCard';
+import { SignPhotos } from '../../ui/SignPhotos';
 import { colors, fitColors } from '../../ui/theme';
 
 const ACCESS_TEXT = {
@@ -34,11 +37,12 @@ const RESEARCH_SOURCE_TEXT = {
 
 export default function SpotScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { settings, saved, isSaved, save, unsave, reports } = useAppState();
+  const { settings, saved, isSaved, save, unsave, reports, trips, activeVehicle } = useAppState();
   const { isPro } = usePro();
   const community = useCommunity();
   const { load: loadCommunity } = community;
-  const spot: ParkingSpot | undefined = getCachedSpot(id) ?? saved.find((s) => s.id === id);
+  const spot: ParkingSpot | undefined =
+    getCachedSpot(id) ?? saved.find((s) => s.id === id) ?? trips.flatMap((t) => t.stops.map((s) => s.spot)).find((s) => s.id === id);
 
   useEffect(() => {
     onSpotViewed(isPro);
@@ -60,6 +64,7 @@ export default function SpotScreen() {
   }
 
   const report = reports[spot.id];
+  const spotPoint = { latitude: spot.latitude, longitude: spot.longitude };
   const drivers = community.summaries[spot.id];
   const { clearance, source } = resolveClearance(spot, report, drivers);
   const phone = spot.phone ?? report?.phone;
@@ -199,13 +204,18 @@ export default function SpotScreen() {
           <Button title="" accessibilityLabel="Share" icon="share-outline" variant="secondary" onPress={share} style={{ width: 52 }} />
         </View>
         <View style={[styles.actions, { marginTop: 8 }]}>
-          <Button title="Add to trip" icon="map-outline" variant="secondary" onPress={() => router.push({ pathname: '/trip/choose', params: { spotId: spot.id } })} style={{ flex: 1 }} />
+          <Button title="Trip" accessibilityLabel="Add to trip" icon="add-circle-outline" variant="secondary" onPress={() => router.push({ pathname: '/trip/choose', params: { spotId: spot.id } })} style={{ flex: 1 }} />
+          <Button title="Timer" icon="timer-outline" variant="secondary" onPress={() => router.push({ pathname: '/timer/[id]', params: { id: spot.id } })} style={{ flex: 1 }} />
           {phone ? (
             <Button title="Call" icon="call-outline" variant="secondary" onPress={call} style={{ flex: 1 }} />
           ) : (
-            <Button title="Find phone" icon="search-outline" variant="secondary" onPress={findPhone} style={{ flex: 1 }} />
+            <Button title="Phone" icon="search-outline" variant="secondary" onPress={findPhone} style={{ flex: 1 }} accessibilityLabel="Find phone number" />
           )}
         </View>
+
+        <NearbyCard spot={spotPoint} vehicleMeters={settings.vehicleMeters} marginMeters={settings.marginMeters} vehicleName={settings.vehicleName} />
+
+        <SignPhotos spotId={spot.id} mine={report?.photos ?? []} />
 
         <SectionTitle>Price & hours</SectionTitle>
         <Card>
@@ -226,13 +236,38 @@ export default function SpotScreen() {
           <InfoRow icon="time-outline" label="Fees charged" value={spot.feeHours} />
           <InfoRow icon="calendar-outline" label="Open hours" value={spot.hours ?? 'Not published'} />
           <InfoRow icon="hourglass-outline" label="Max stay" value={spot.maxStay} />
+          <InfoRow
+            icon="moon-outline"
+            label="Overnight"
+            value={spot.overnight === 'yes' ? 'Allowed' : overnightBlocked(spot) ? 'Not allowed or closes at night' : undefined}
+          />
           <InfoRow icon="card-outline" label="Payment" value={spot.payment.length ? spot.payment.join(', ') : undefined} />
         </Card>
+
+        {spot.fee !== 'free' && spot.access !== 'restricted' && spot.kind !== 'truck-stop' && (
+          <>
+            <SectionTitle>Check rates & book</SectionTitle>
+            <Card style={{ gap: 8 }}>
+              <Text style={styles.small}>See today&apos;s prices and reserve a space. Check the garage&apos;s height limit before you book.</Text>
+              <View style={styles.actions}>
+                {BOOKING_LINKS.map((b) => (
+                  <Button key={b.name} title={b.name} icon="open-outline" variant="secondary" onPress={() => Linking.openURL(b.url(spot.latitude, spot.longitude))} style={{ flex: 1 }} />
+                ))}
+              </View>
+            </Card>
+          </>
+        )}
 
         <SectionTitle>Details</SectionTitle>
         <Card>
           <InfoRow icon="people-outline" label="Access" value={ACCESS_TEXT[spot.access]} />
           <InfoRow icon="grid-outline" label="Spaces" value={spot.capacity ? String(spot.capacity) : undefined} />
+          <InfoRow icon="home-outline" label="RVs" value={spot.rvFriendly ? 'RVs and motorhomes welcome' : undefined} />
+          <InfoRow
+            icon="resize-outline"
+            label="Max length"
+            value={spot.maxLengthMeters ? `${Math.round(spot.maxLengthMeters / 0.3048)} ft${activeVehicle.lengthFeet && activeVehicle.lengthFeet * 0.3048 > spot.maxLengthMeters ? ` · ${activeVehicle.name} (${activeVehicle.lengthFeet} ft) is too long` : ''}` : undefined}
+          />
           <InfoRow icon="bus-outline" label="Truck / bus spaces" value={spot.truckCapacity ? String(spot.truckCapacity) : spot.truckFriendly ? 'Trucks welcome' : undefined} />
           <InfoRow icon="business-outline" label="Operator" value={spot.operator} />
           <InfoRow icon="star-outline" label="Features" value={spot.amenities.length ? spot.amenities.join(' · ') : undefined} />
@@ -312,6 +347,7 @@ const styles = StyleSheet.create({
   kindIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 22, fontWeight: '800', color: colors.text },
   subtitle: { fontSize: 14, color: colors.muted, marginTop: 2 },
+  small: { fontSize: 13, color: colors.muted, lineHeight: 18 },
   verdict: { gap: 10, borderWidth: 1.5 },
   verdictRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   unknownActions: { flexDirection: 'row', gap: 8 },

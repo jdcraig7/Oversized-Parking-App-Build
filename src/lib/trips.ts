@@ -78,3 +78,19 @@ export function legs<T>(points: T[], max = 10): T[][] {
 export function dayLabel(iso: string): string {
   return new Date(parseDay(iso)).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
+
+/** Plain-text summary of a trip to send by text or email. */
+export function tripShareText(trip: Pick<Trip, 'name' | 'startDate' | 'stops'>, vehicle?: { name: string; height: string }): string {
+  const dates = schedule(trip);
+  const lines = [`${trip.name}${vehicle ? ` (${vehicle.name}, ${vehicle.height} tall)` : ''}`];
+  trip.stops.forEach((s, i) => {
+    const when = dates ? (s.nights > 0 ? `${dayLabel(dates[i].arrive)} – ${dayLabel(dates[i].leave)}` : dayLabel(dates[i].arrive)) : `${s.nights} ${s.nights === 1 ? 'night' : 'nights'}`;
+    const where = s.spot.address ? `, ${s.spot.address}` : '';
+    lines.push(`${i + 1}. ${s.spot.name}${where} · ${when}`);
+    lines.push(`   https://www.google.com/maps/search/?api=1&query=${s.spot.latitude.toFixed(6)},${s.spot.longitude.toFixed(6)}`);
+  });
+  const route = routeUrl(trip.stops.slice(0, 10).map((s) => s.spot));
+  if (route && trip.stops.length > 1) lines.push('', `Route${trip.stops.length > 10 ? ' (first 10 stops)' : ''}: ${route}`);
+  lines.push('', 'Planned with Oversized Parking');
+  return lines.join('\n');
+}

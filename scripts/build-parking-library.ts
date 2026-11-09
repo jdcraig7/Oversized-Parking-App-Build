@@ -14,9 +14,11 @@ import { createInterface } from 'node:readline';
 
 import { parseHeight } from '../src/lib/height';
 import { parseOverpass } from '../src/lib/osm';
+import { isDumpStation, isLowClearanceCandidate } from '../src/lib/nearby';
 import {
   isLibraryCandidate,
   recordToElement,
+  slimExtraTags,
   slimTags,
   tileKeyFor,
   tilePath,
@@ -210,6 +212,7 @@ async function main() {
   const tiles = new Map<string, Map<string, TileRecord>>();
   let read = 0;
   let kept = 0;
+  const extras = { h: 0, d: 0 };
   const bounds = { minLat: Infinity, maxLat: -Infinity, minLon: Infinity, maxLon: -Infinity };
 
   const lines = createInterface({ input: createReadStream(input), crlfDelay: Infinity });
@@ -219,10 +222,20 @@ async function main() {
     read++;
     const f = JSON.parse(line) as Feature;
     const tags = f.properties ?? {};
-    if (!isLibraryCandidate(tags)) continue;
+    const extra = isLowClearanceCandidate(tags) ? 'h' : isDumpStation(tags) ? 'd' : null;
+    if (!extra && !isLibraryCandidate(tags)) continue;
     const center = centerOf(f.geometry);
     const osm = osmIdOf(f.id ?? '');
     if (!center || !osm) continue;
+    if (extra) {
+      // Low bridges/barriers and dump stations ride along in the same tiles.
+      const rec: TileRecord = [extra, osm[1], Math.round(center[1] * 1e5) / 1e5, Math.round(center[0] * 1e5) / 1e5, slimExtraTags({ ...tags, osm: osm[0] })];
+      const key = tileKeyFor({ latitude: rec[2], longitude: rec[3] });
+      if (!tiles.has(key)) tiles.set(key, new Map());
+      tiles.get(key)!.set(`${extra}${osm[0]}${osm[1]}`, rec);
+      extras[extra]++;
+      continue;
+    }
     const record: TileRecord = [
       osm[0],
       osm[1],
@@ -276,12 +289,14 @@ async function main() {
     const json = JSON.stringify(tile);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, json);
-    manifest.tiles[key] = tile.records.length;
+    // Parking places only (low clearances and dump stations aren't counted).
+    manifest.tiles[key] = tile.records.filter((r) => 'nwrp'.includes(r[0])).length;
     manifest.hashes = { ...manifest.hashes, [key]: createHash('sha1').update(json).digest('hex').slice(0, 16) };
   }
   manifest.updated = updated;
   manifest.total = Object.values(manifest.tiles as Record<string, number>).reduce((a, b) => a + b, 0);
   writeFileSync(manifestPath, JSON.stringify(manifest));
+  console.log(`low clearances: ${extras.h}, dump stations: ${extras.d}`);
   console.log(`features read: ${read}, kept: ${kept}, tiles written: ${tiles.size}, library total: ${manifest.total}`);
 }
 

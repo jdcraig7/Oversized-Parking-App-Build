@@ -1,10 +1,13 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 import { feetInchesToMeters } from '../../lib/height';
 import type { ParkingSpot } from '../../lib/types';
 import { getCachedSpot } from '../../services/parkingApi';
+import { deleteLocalPhoto, keepPhoto, photosShared, sharePhoto } from '../../services/signPhotos';
 import { useAppState } from '../../state/AppState';
 import { useCommunity } from '../../state/Community';
 import { Button, Card, SectionTitle } from '../../ui/components';
@@ -25,6 +28,20 @@ export default function ReportScreen() {
   const [price, setPrice] = useState(existing?.price ?? '');
   const [note, setNote] = useState(existing?.note ?? '');
   const [phone, setPhone] = useState(existing?.phone ?? '');
+  const [photos, setPhotos] = useState<string[]>(existing?.photos ?? []);
+
+  const addPhoto = async (from: 'camera' | 'library') => {
+    const perm = from === 'camera' ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Permission needed', `Allow ${from === 'camera' ? 'camera' : 'photo'} access in your phone’s Settings to add a photo.`);
+      return;
+    }
+    const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.5, exif: false };
+    const res = from === 'camera' ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
+    if (res.canceled || !res.assets[0]) return;
+    const uri = await keepPhoto(res.assets[0].uri, id);
+    setPhotos((p) => [...p, uri].slice(-6));
+  };
   const [shared, setShared] = useState(existing?.shared ?? true);
 
   // Network work runs in the background; reports made offline are queued and sent later.
@@ -37,10 +54,16 @@ export default function ReportScreen() {
       price: price.trim() || undefined,
       note: note.trim() || undefined,
       phone: phone.trim() || undefined,
+      photos: photos.length ? photos : undefined,
       shared: community.enabled && shared,
       updatedAt: new Date().toISOString(),
     };
     saveReport(report);
+    // Removed photos are deleted from the phone; new ones are shared if sharing is on.
+    for (const old of existing?.photos ?? []) if (!photos.includes(old)) deleteLocalPhoto(old);
+    if (report.shared && photosShared) {
+      for (const p of photos) if (!existing?.photos?.includes(p)) syncInBackground(sharePhoto(id, p).then(() => {}));
+    }
     if (report.shared) syncInBackground(community.share(report));
     else if (existing?.shared) syncInBackground(community.unshare(id));
     router.back();
@@ -71,6 +94,29 @@ export default function ReportScreen() {
 
         <SectionTitle>Price</SectionTitle>
         <TextInput value={price} onChangeText={setPrice} placeholder="e.g. $4/hr, $18 daily max, free after 6pm" placeholderTextColor={colors.muted} style={styles.input} />
+
+        <SectionTitle>Photo of the sign (optional)</SectionTitle>
+        <Text style={styles.hint}>A photo of the clearance sign or entrance is the best proof for other drivers.</Text>
+        <View style={styles.photos}>
+          {photos.map((uri) => (
+            <View key={uri}>
+              <Image source={{ uri }} style={styles.photo} accessibilityLabel="Sign photo" />
+              <Pressable
+                onPress={() => setPhotos((p) => p.filter((x) => x !== uri))}
+                style={styles.photoRemove}
+                accessibilityRole="button"
+                accessibilityLabel="Remove photo"
+                hitSlop={8}
+              >
+                <Ionicons name="close-circle" size={24} color="#FFFFFF" />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+        <View style={styles.photoButtons}>
+          <Button title="Take photo" icon="camera-outline" variant="secondary" onPress={() => addPhoto('camera')} style={{ flex: 1 }} />
+          <Button title="Choose" icon="images-outline" variant="secondary" onPress={() => addPhoto('library')} style={{ flex: 1 }} />
+        </View>
 
         <SectionTitle>Phone number (optional)</SectionTitle>
         <TextInput
@@ -122,6 +168,10 @@ export default function ReportScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 40 },
+  photos: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  photo: { width: 96, height: 96, borderRadius: radius, backgroundColor: colors.border },
+  photoRemove: { position: 'absolute', top: 2, right: 2, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 12 },
+  photoButtons: { flexDirection: 'row', gap: 8, marginTop: 8 },
   title: { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 6 },
   body: { fontSize: 15, color: colors.muted, lineHeight: 21 },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

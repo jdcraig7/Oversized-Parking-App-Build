@@ -29,7 +29,7 @@ export function toFeatureLine(e: Element): string | null {
 
 async function query(states: string[]): Promise<Element[]> {
   const areas = states.map((s) => `area["ISO3166-2"="${s}"];`).join('');
-  const q = `[out:json][timeout:600];(${areas})->.s;(nwr["amenity"="parking"](area.s);nwr["amenity"="fuel"]["hgv"~"^(yes|designated)$"](area.s););out tags center;`;
+  const q = `[out:json][timeout:600];(${areas})->.s;(nwr["amenity"="parking"](area.s);nwr["amenity"="fuel"]["hgv"~"^(yes|designated)$"](area.s);nwr["amenity"="sanitary_dump_station"](area.s);way["highway"]["maxheight"](area.s);node["barrier"="height_restrictor"](area.s););out tags center;`;
   let last: unknown;
   for (const server of SERVERS) {
     for (let attempt = 0; attempt < 2; attempt++) {

@@ -35,6 +35,7 @@ import { usePro } from '../../state/Pro';
 import { Button, Chip } from '../../ui/components';
 import { SponsoredCard } from '../../ui/SponsoredCard';
 import { SpotCard } from '../../ui/SpotCard';
+import { TimerBanner } from '../../ui/TimerBanner';
 import { colors, fitColors, radius } from '../../ui/theme';
 
 const SORT_LABELS: Record<SortOrder, string> = {
@@ -202,9 +203,9 @@ export default function SearchScreen() {
   const evaluated = useMemo(() => {
     if (!center) return [];
     return spots.map((s) =>
-      evaluate(s, center, settings.vehicleMeters, settings.marginMeters, reports[s.id], community.summaries[s.id]),
+      evaluate(s, center, settings.vehicleMeters, settings.marginMeters, reports[s.id], community.summaries[s.id], activeVehicle.lengthFeet),
     );
-  }, [spots, center, settings.vehicleMeters, settings.marginMeters, reports, community.summaries]);
+  }, [spots, center, settings.vehicleMeters, settings.marginMeters, reports, community.summaries, activeVehicle.lengthFeet]);
 
   // At most one sponsor per search, and only parking the vehicle fits (see pickSponsored).
   const pick: SponsorPick | null = useMemo(
@@ -291,6 +292,8 @@ export default function SearchScreen() {
         </Pressable>
       </View>
 
+      <TimerBanner />
+
       {/* Vehicle summary */}
       <Pressable style={styles.vehicleBar} onPress={switchVehicle} accessibilityRole="button" accessibilityHint="Switch vehicle">
         <MaterialCommunityIcons name={vehicleTypeInfo(activeVehicle.type).icon as never} size={20} color={colors.primary} />
@@ -326,7 +329,9 @@ export default function SearchScreen() {
         <Chip label="Free" icon="pricetag" active={filters.freeOnly} onPress={() => setFilter({ freeOnly: !filters.freeOnly })} />
         <Chip label="Open-air lots" icon="sunny" active={filters.lotsOnly} onPress={() => setFilter({ lotsOnly: !filters.lotsOnly, garagesOnly: false })} />
         <Chip label="Garages" icon="business" active={filters.garagesOnly} onPress={() => setFilter({ garagesOnly: !filters.garagesOnly, lotsOnly: false })} />
-        <Chip label="Truck / RV" icon="bus" active={filters.truckOnly} onPress={() => setFilter({ truckOnly: !filters.truckOnly })} />
+        <Chip label="Truck parking" icon="bus" active={filters.truckOnly} onPress={() => setFilter({ truckOnly: !filters.truckOnly })} />
+        <Chip label="RV friendly" icon="home-outline" active={filters.rvOnly} onPress={() => setFilter({ rvOnly: !filters.rvOnly })} />
+        <Chip label="Overnight OK" icon="moon-outline" active={filters.overnightOk} onPress={() => setFilter({ overnightOk: !filters.overnightOk })} />
         <Chip
           label={`Sort: ${SORT_LABELS[filters.sort]}`}
           icon="swap-vertical"

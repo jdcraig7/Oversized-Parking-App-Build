@@ -84,3 +84,19 @@ export const INTERSTITIAL_MIN_INTERVAL_MS = 4 * 60 * 1000;
 
 export const PRIVACY_POLICY_URL = env.EXPO_PUBLIC_PRIVACY_POLICY_URL ?? `${PARKING_LIBRARY_URL}/privacy`;
 export const SUPPORT_EMAIL = env.EXPO_PUBLIC_CONTACT_EMAIL ?? 'jdcraig7@gmail.com';
+
+/**
+ * "Check rates & book" links on parking details. Add your affiliate/partner
+ * id once you have one (ParkWhiz/Arrive partner program, SpotHero affiliate
+ * program) so bookings earn a commission.
+ */
+export const BOOKING_LINKS: { name: string; url: (lat: number, lon: number) => string }[] = [
+  {
+    name: 'ParkWhiz',
+    url: (lat, lon) => `https://www.parkwhiz.com/search/?lat=${lat.toFixed(6)}&lng=${lon.toFixed(6)}`,
+  },
+  {
+    name: 'SpotHero',
+    url: (lat, lon) => `https://spothero.com/search?latitude=${lat.toFixed(6)}&longitude=${lon.toFixed(6)}`,
+  },
+];

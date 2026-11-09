@@ -1,8 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Directory, File, Paths } from 'expo-file-system';
 
 import { OVERPASS_URLS, PARKING_LIBRARY_URL, USER_AGENT } from '../config';
 import { buildParkingQuery, overpassFailure, parseOverpass, type OverpassResponse } from '../lib/osm';
-import { elementsWithin, planTiles, versionedTilePath, tilesForCircle, type LibraryManifest, type ParkingTile } from '../lib/tiles';
+import type { DumpStation, LowClearance } from '../lib/nearby';
+import { elementsWithin, extrasWithin, planTiles, versionedTilePath, tilesForCircle, type LibraryManifest, type ParkingTile } from '../lib/tiles';
 import type { LatLng, ParkingSpot } from '../lib/types';
 
 const CACHE_TTL_MS = 30 * 60 * 1000;
@@ -134,16 +136,69 @@ export async function searchParking(
 
 // Tiles are named by content hash, so a saved copy is valid for as long as the
 // manifest still lists that hash: no expiry needed, and it works offline.
+// They're saved as files (Android caps AsyncStorage at ~6 MB, and one busy
+// city area can be several MB); older versions saved them in AsyncStorage.
 const TILE_STORAGE_PREFIX = 'tile.v2.';
 const memoryTiles = new Map<string, ParkingTile>();
 
+function tileDir(): Directory | null {
+  try {
+    const dir = new Directory(Paths.document, 'parking-tiles');
+    if (!dir.exists) dir.create({ intermediates: true, idempotent: true });
+    return dir;
+  } catch {
+    return null; // e.g. web preview
+  }
+}
+const tileFile = (dir: Directory, key: string) => new File(dir, `${key.replace('/', '_')}.json`);
+
 async function storedTile(key: string): Promise<{ hash: string; tile: ParkingTile } | null> {
+  const dir = tileDir();
+  if (dir) {
+    try {
+      const f = tileFile(dir, key);
+      if (f.exists) return JSON.parse(await f.text());
+    } catch {}
+  }
   try {
     const raw = await AsyncStorage.getItem(TILE_STORAGE_PREFIX + key);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
+}
+
+async function saveTile(key: string, hash: string, tile: ParkingTile) {
+  const json = JSON.stringify({ hash, tile });
+  const dir = tileDir();
+  if (dir) {
+    try {
+      const f = tileFile(dir, key);
+      if (!f.exists) f.create();
+      await f.write(json);
+      AsyncStorage.removeItem(TILE_STORAGE_PREFIX + key).catch(() => {});
+      return;
+    } catch {}
+  }
+  AsyncStorage.setItem(TILE_STORAGE_PREFIX + key, json).catch(() => {});
+}
+
+/** Size of saved map tiles in bytes, and a way to clear them (Settings). */
+export function savedMapsSize(): number {
+  const dir = tileDir();
+  try {
+    return dir?.size ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function clearSavedMaps() {
+  memoryTiles.clear();
+  try {
+    const dir = tileDir();
+    if (dir) dir.delete();
+  } catch {}
 }
 
 /** How often to check for library updates (new tiles, research). */
@@ -189,7 +244,7 @@ async function loadTile(baseUrl: string, key: string, hash: string): Promise<Par
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const tile = (await res.json()) as ParkingTile;
     memoryTiles.set(hash, tile);
-    AsyncStorage.setItem(TILE_STORAGE_PREFIX + key, JSON.stringify({ hash, tile })).catch(() => {});
+    await saveTile(key, hash, tile);
     return tile;
   } catch (e) {
     // Offline or host trouble: an older saved copy beats nothing.
@@ -210,5 +265,56 @@ async function loadTiles(baseUrl: string, manifest: LibraryManifest, keys: strin
   } catch (e) {
     const detail = e instanceof Error && e.name === 'AbortError' ? `no answer in ${SERVER_TIMEOUT_MS / 1000}s` : e instanceof Error ? e.message : 'unknown error';
     throw new ParkingSearchError(`Couldn't load parking. Check your connection and try again.\n\nDetails: parking library: ${detail}`);
+  }
+}
+
+// --- Offline: save the parking around trip stops ahead of time ---------------
+
+/** Library tiles that cover circles of `radiusMeters` around each point. */
+async function tilesFor(points: LatLng[], radiusMeters: number) {
+  const manifest = PARKING_LIBRARY_URL ? await loadManifest(PARKING_LIBRARY_URL) : null;
+  if (!manifest) return null;
+  const keys = [...new Set(points.flatMap((p) => tilesForCircle(p, radiusMeters)))];
+  return { manifest, keys: planTiles(manifest, keys).fetch };
+}
+
+/** How many of the tiles around `points` are saved on the phone, current or not. */
+export async function offlineStatus(points: LatLng[], radiusMeters: number): Promise<{ saved: number; total: number } | null> {
+  const plan = await tilesFor(points, radiusMeters);
+  if (!plan) return null;
+  let saved = 0;
+  for (const k of plan.keys) if ((await storedTile(k))?.hash) saved++;
+  return { saved, total: plan.keys.length };
+}
+
+/** Downloads every tile around `points` so search works there without signal. */
+export async function downloadForOffline(points: LatLng[], radiusMeters: number, onProgress?: (done: number, total: number) => void): Promise<number> {
+  const plan = await tilesFor(points, radiusMeters);
+  if (!plan) throw new ParkingSearchError('Couldn’t reach the parking library. Connect to the internet and try again.');
+  let done = 0;
+  for (const k of plan.keys) {
+    const hash = plan.manifest.hashes?.[k];
+    if (hash) await loadTile(PARKING_LIBRARY_URL, k, hash);
+    onProgress?.(++done, plan.keys.length);
+  }
+  return plan.keys.length;
+}
+
+// --- Around a spot: low clearances and RV dump stations ----------------------
+
+/**
+ * Low bridges/barriers and dump stations within `radiusMeters` of a point,
+ * from the library tiles (usually already saved from the search). Null when
+ * the library doesn't cover the area or can't be reached.
+ */
+export async function nearbyFor(center: LatLng, radiusMeters: number): Promise<{ lowClearances: LowClearance[]; dumpStations: DumpStation[] } | null> {
+  const manifest = PARKING_LIBRARY_URL ? await loadManifest(PARKING_LIBRARY_URL) : null;
+  if (!manifest) return null;
+  const plan = planTiles(manifest, tilesForCircle(center, radiusMeters));
+  if (!plan.covered) return null;
+  try {
+    return extrasWithin(await loadTiles(PARKING_LIBRARY_URL, manifest, plan.fetch), center, radiusMeters);
+  } catch {
+    return null;
   }
 }

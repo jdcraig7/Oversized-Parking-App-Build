@@ -8,7 +8,7 @@ import { clearanceText, FeeBadge, FitBadge, KIND_ICONS } from './components';
 import { colors, radius } from './theme';
 
 export function SpotCard({ result, onPress }: { result: SpotResult; onPress: () => void }) {
-  const { spot, fit, clearance, distance, price, driverReports } = result;
+  const { spot, fit, clearance, distance, price, driverReports, tooLong } = result;
   return (
     <Pressable
       onPress={onPress}
@@ -36,7 +36,17 @@ export function SpotCard({ result, onPress }: { result: SpotResult; onPress: () 
         ) : null}
         <View style={styles.badges}>
           <FitBadge fit={fit} />
+          {tooLong && (
+            <View style={[styles.tag, styles.warnTag]}>
+              <Text style={[styles.tagText, styles.warnText]}>Too long</Text>
+            </View>
+          )}
           <FeeBadge fee={spot.fee} />
+          {spot.rvFriendly && (
+            <View style={styles.tag}>
+              <Text style={styles.tagText}>RVs OK</Text>
+            </View>
+          )}
           {spot.access === 'customers' && (
             <View style={[styles.tag, styles.warnTag]}>
               <Text style={[styles.tagText, styles.warnText]}>Customers only</Text>

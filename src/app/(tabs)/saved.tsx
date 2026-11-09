@@ -16,7 +16,7 @@ import { SpotCard } from '../../ui/SpotCard';
 import { colors } from '../../ui/theme';
 
 export default function SavedScreen() {
-  const { saved, settings, reports } = useAppState();
+  const { saved, settings, reports, activeVehicle } = useAppState();
   const { isPro } = usePro();
   const { summaries, load } = useCommunity();
   const [here, setHere] = useState<LatLng | null>(null);
@@ -35,9 +35,9 @@ export default function SavedScreen() {
   const results = useMemo(
     () =>
       saved.map((s) =>
-        evaluate(s, here ?? s, settings.vehicleMeters, settings.marginMeters, reports[s.id], summaries[s.id]),
+        evaluate(s, here ?? s, settings.vehicleMeters, settings.marginMeters, reports[s.id], summaries[s.id], activeVehicle.lengthFeet),
       ),
-    [saved, here, settings.vehicleMeters, settings.marginMeters, reports, summaries],
+    [saved, here, settings.vehicleMeters, settings.marginMeters, reports, summaries, activeVehicle.lengthFeet],
   );
 
   return (

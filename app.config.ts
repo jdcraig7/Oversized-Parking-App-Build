@@ -40,6 +40,14 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-dev-client',
+    'expo-notifications',
+    [
+      'expo-image-picker',
+      {
+        cameraPermission: 'Take a photo of a clearance sign or garage entrance to save with your report.',
+        photosPermission: 'Choose a photo of a clearance sign or garage entrance to save with your report.',
+      },
+    ],
     [
       'expo-splash-screen',
       {

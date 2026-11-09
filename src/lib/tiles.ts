@@ -5,6 +5,7 @@
 
 import { distanceMeters } from './geo';
 import type { OverpassElement } from './osm';
+import { lowClearanceFrom, type DumpStation, type LowClearance } from './nearby';
 import type { LatLng } from './types';
 
 export const TILE_FORMAT_VERSION = 1;
@@ -12,11 +13,13 @@ export const TILE_FORMAT_VERSION = 1;
 export const TILE_DEGREES = 0.25;
 
 /**
- * A parking place as stored in a tile: [type, id, lat, lon, tags]. Types n/w/r
- * are OpenStreetMap nodes/ways/relations; p is a place from our own research
- * (research/places.csv) that OpenStreetMap doesn't have.
+ * A place as stored in a tile: [type, id, lat, lon, tags]. Types n/w/r are
+ * OpenStreetMap parking nodes/ways/relations; p is a parking place from our own
+ * research (research/places.csv) that OpenStreetMap doesn't have; h is a road,
+ * bridge or barrier with a low height limit and d an RV dump station (see
+ * lib/nearby.ts). For h and d the tag "osm" holds the OpenStreetMap type.
  */
-export type TileRecord = ['n' | 'w' | 'r' | 'p', number, number, number, Record<string, string>];
+export type TileRecord = ['n' | 'w' | 'r' | 'p' | 'h' | 'd', number, number, number, Record<string, string>];
 
 export interface ParkingTile {
   v: number;
@@ -80,9 +83,10 @@ export function planTiles(manifest: LibraryManifest, keys: string[]): { covered:
 }
 
 const TYPES = { n: 'node', w: 'way', r: 'relation', p: 'place' } as const;
+const isParking = (r: TileRecord): r is ['n' | 'w' | 'r' | 'p', number, number, number, Record<string, string>] => r[0] in TYPES;
 
 export function recordToElement([t, id, lat, lon, tags]: TileRecord): OverpassElement {
-  return { type: TYPES[t], id, lat, lon, tags };
+  return { type: TYPES[t as keyof typeof TYPES], id, lat, lon, tags };
 }
 
 /** Elements from the given tiles that lie within `radiusMeters` of `center`, de-duplicated. */
@@ -91,6 +95,7 @@ export function elementsWithin(tiles: ParkingTile[], center: LatLng, radiusMeter
   const out: OverpassElement[] = [];
   for (const tile of tiles) {
     for (const r of tile.records) {
+      if (!isParking(r)) continue;
       const key = `${r[0]}${r[1]}`;
       if (seen.has(key)) continue;
       if (distanceMeters(center, { latitude: r[2], longitude: r[3] }) > radiusMeters) continue;
@@ -101,6 +106,37 @@ export function elementsWithin(tiles: ParkingTile[], center: LatLng, radiusMeter
   return out;
 }
 
+/** Low clearances and dump stations from the given tiles within `radiusMeters` of `center`. */
+export function extrasWithin(tiles: ParkingTile[], center: LatLng, radiusMeters: number): { lowClearances: LowClearance[]; dumpStations: DumpStation[] } {
+  const lowClearances: LowClearance[] = [];
+  const dumpStations: DumpStation[] = [];
+  const seen = new Set<string>();
+  for (const tile of tiles) {
+    for (const [t, id, lat, lon, tags] of tile.records) {
+      if (t !== 'h' && t !== 'd') continue;
+      const key = `${t}${tags.osm ?? ''}${id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const distance = distanceMeters(center, { latitude: lat, longitude: lon });
+      if (distance > radiusMeters) continue;
+      if (t === 'h') {
+        const c = lowClearanceFrom(key, lat, lon, tags, center);
+        if (c) lowClearances.push(c);
+      } else {
+        dumpStations.push({ id: key, latitude: lat, longitude: lon, name: tags.name ?? tags.operator ?? 'RV dump station', fee: tags.fee, distance });
+      }
+    }
+  }
+  lowClearances.sort((a, b) => a.distance - b.distance);
+  dumpStations.sort((a, b) => a.distance - b.distance);
+  return { lowClearances, dumpStations };
+}
+
+/** Tags kept for low clearances and dump stations. */
+const EXTRA_KEYS = new Set(['maxheight', 'maxheight:physical', 'name', 'ref', 'bridge', 'tunnel', 'barrier', 'highway', 'operator', 'fee', 'access', 'opening_hours', 'osm']);
+export const slimExtraTags = (tags: Record<string, string>) =>
+  Object.fromEntries(Object.entries(tags).filter(([k]) => EXTRA_KEYS.has(k)).map(([k, v]) => [k, v.slice(0, 120)]));
+
 // --- Used by the build script ---------------------------------------------
 
 /** Tag keys the app reads. Everything else is dropped to keep tiles small. */
@@ -108,7 +144,7 @@ const KEEP_KEYS = new Set([
   'amenity', 'parking', 'name', 'brand', 'operator', 'access', 'fee', 'charge', 'fee:conditional',
   'opening_hours', 'capacity', 'capacity:hgv', 'capacity:disabled', 'capacity:charging', 'maxstay',
   'maxheight', 'maxheight:physical', 'maxheight:signed', 'covered', 'hgv', 'access:hgv', 'bus', 'motorhome',
-  'supervised', 'surveillance', 'lit', 'toilets', 'shower', 'fuel:diesel', 'park_ride', 'motorcar:charging',
+  'supervised', 'surveillance', 'lit', 'overnight', 'maxlength', 'caravans', 'capacity:caravans', 'capacity:motorhome', 'toilets', 'shower', 'fuel:diesel', 'park_ride', 'motorcar:charging',
   'phone', 'contact:phone', 'website', 'contact:website', 'url', 'description',
   'addr:housenumber', 'addr:street', 'addr:city', 'addr:state', 'addr:postcode',
 ]);

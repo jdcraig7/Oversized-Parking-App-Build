@@ -78,3 +78,18 @@ describe('my garage', () => {
     assert.equal(guessType('Box truck'), 'box-truck');
   });
 });
+
+describe('sharing a trip', () => {
+  it('lists stops in order with dates and links', async () => {
+    const { tripShareText } = await import('../src/lib/trips');
+    const spot = (name: string, lat: number) => ({ name, address: `${name} St`, latitude: lat, longitude: -118 }) as never;
+    const text = tripShareText(
+      { name: 'Utah run', startDate: '2026-12-01', stops: [{ id: 'a', spot: spot('First', 34), nights: 2 }, { id: 'b', spot: spot('Second', 35), nights: 1 }] },
+      { name: 'Winnebago', height: `11' 6"` },
+    );
+    assert.match(text, /^Utah run \(Winnebago, 11' 6" tall\)/);
+    assert.match(text, /1\. First, First St · Tue, Dec 1 – Thu, Dec 3/);
+    assert.match(text, /2\. Second, Second St · Thu, Dec 3 – Fri, Dec 4/);
+    assert.match(text, /Route: https:\/\/www\.google\.com\/maps\/dir\//);
+  });
+});

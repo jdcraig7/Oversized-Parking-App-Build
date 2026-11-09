@@ -55,6 +55,12 @@ export interface ParkingSpot {
   /** Maximum stay, e.g. "2 hours". */
   maxStay?: string;
   truckFriendly: boolean;
+  /** Marked as welcoming motorhomes/caravans, or truck parking that doesn't exclude them. */
+  rvFriendly: boolean;
+  /** Overnight parking explicitly allowed or banned, when known. */
+  overnight?: 'yes' | 'no';
+  /** Posted length limit. */
+  maxLengthMeters?: number;
   covered: boolean;
   address?: string;
   operator?: string;
@@ -84,6 +90,8 @@ export interface SpotReport {
   note?: string;
   /** A phone number the driver found (kept on this phone). */
   phone?: string;
+  /** Photos of the clearance sign / entrance, as files on this phone. */
+  photos?: string[];
   /** Also shared with other drivers (when shared reports are set up). */
   shared?: boolean;
   updatedAt: string;

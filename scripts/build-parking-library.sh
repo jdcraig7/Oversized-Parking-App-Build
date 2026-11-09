@@ -15,7 +15,7 @@ updated=$(osmium fileinfo -g header.option.osmosis_replication_timestamp "$input
 [ -n "$updated" ] || updated=$(date -u +%F)
 
 echo "Filtering parking and truck stops from $input (data from $updated)..."
-osmium tags-filter "$input" nwr/amenity=parking nwr/amenity=fuel -o "$work/parking.pbf"
+osmium tags-filter "$input" nwr/amenity=parking nwr/amenity=fuel nwr/amenity=sanitary_dump_station nw/maxheight nw/maxheight:physical -o "$work/parking.pbf"
 osmium export "$work/parking.pbf" -f geojsonseq --add-unique-id=type_id -o "$work/parking.geojsonseq"
 
 mkdir -p "$out"

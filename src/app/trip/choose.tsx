@@ -16,7 +16,7 @@ export default function ChooseTripScreen() {
   const { spotId } = useLocalSearchParams<{ spotId: string }>();
   const { trips, saved, saveTrip } = useAppState();
   const newTrip = useNewTrip();
-  const spot = getCachedSpot(spotId) ?? saved.find((s) => s.id === spotId);
+  const spot = getCachedSpot(spotId) ?? saved.find((s) => s.id === spotId) ?? trips.flatMap((t) => t.stops.map((s) => s.spot)).find((s) => s.id === spotId);
 
   if (!spot) {
     return (

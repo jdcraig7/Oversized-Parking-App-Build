@@ -2,6 +2,7 @@
 // This file has no React Native imports so it can be unit tested in Node.
 
 import { parseHeight, type Clearance } from './height';
+import { parseLengthMeters } from './nearby';
 import type { AccessLevel, FeeStatus, ParkingSpot, ResearchNote, SpotKind } from './types';
 
 export interface OverpassElement {
@@ -241,6 +242,14 @@ export function elementToSpot(el: OverpassElement, fetchedAt: string): ParkingSp
     truckCapacity: toInt(tags['capacity:hgv']),
     maxStay: tags.maxstay,
     truckFriendly: kind === 'truck' || kind === 'truck-stop' || yes(tags.hgv) || yes(tags.bus) || yes(tags.motorhome),
+    rvFriendly:
+      yes(tags.motorhome) ||
+      yes(tags.caravans) ||
+      toInt(tags['capacity:motorhome']) !== undefined ||
+      toInt(tags['capacity:caravans']) !== undefined ||
+      ((kind === 'truck' || kind === 'truck-stop') && tags.motorhome !== 'no'),
+    overnight: tags.overnight === 'yes' || tags.overnight === 'no' ? tags.overnight : undefined,
+    maxLengthMeters: parseLengthMeters(tags.maxlength),
     covered: clearance.status !== 'open',
     address: addressFor(tags),
     operator: tags.operator && tags.operator !== givenName ? tags.operator : undefined,

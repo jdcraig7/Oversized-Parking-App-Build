@@ -1,11 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { FREE_VEHICLE_LIMIT, PRIVACY_POLICY_URL, SUPPORT_EMAIL } from '../../config';
 import { feetInchesToMeters, formatFeetInches, metersToTotalInches } from '../../lib/height';
 import { MARGIN_OPTIONS, RADIUS_OPTIONS, vehicleTypeInfo } from '../../lib/vehicles';
+import { clearSavedMaps, savedMapsSize } from '../../services/parkingApi';
 import { useAppState } from '../../state/AppState';
 import { usePro } from '../../state/Pro';
 import { Button, Card, Chip, SectionTitle } from '../../ui/components';
@@ -13,6 +15,7 @@ import { colors } from '../../ui/theme';
 
 export default function SettingsScreen() {
   const { settings, updateSettings, selectVehicle } = useAppState();
+  const [mapsMb, setMapsMb] = useState(() => savedMapsSize() / 1e6);
   const pro = usePro();
 
   const addVehicle = () => {
@@ -120,6 +123,31 @@ export default function SettingsScreen() {
             <Chip key={miles} label={`${miles} mi`} active={settings.radiusMiles === miles} onPress={() => updateSettings({ radiusMiles: miles })} />
           ))}
         </View>
+      </Card>
+
+      <SectionTitle>Saved maps</SectionTitle>
+      <Card style={{ gap: 8 }}>
+        <Text style={styles.body}>
+          Parking you&apos;ve viewed or saved for offline trips: {mapsMb < 0.1 ? 'under 0.1' : mapsMb.toFixed(1)} MB on this phone.
+        </Text>
+        <Button
+          title="Clear saved maps"
+          icon="trash-outline"
+          variant="secondary"
+          onPress={() =>
+            Alert.alert('Clear saved maps?', 'Trips saved for offline will need to be saved again.', [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Clear',
+                style: 'destructive',
+                onPress: () => {
+                  clearSavedMaps();
+                  setMapsMb(0);
+                },
+              },
+            ])
+          }
+        />
       </Card>
 
       <SectionTitle>Purchases</SectionTitle>
