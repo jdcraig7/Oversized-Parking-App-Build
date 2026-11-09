@@ -1,0 +1,56 @@
+# Daily garage-height research
+
+A scheduled job looks up about 50 garages a day that have no height in the
+map data, and records what it finds. The weekly library update builds the
+results into the app. This file is the job's instructions; people can follow
+it too.
+
+## Each run
+
+1. `git fetch origin claude/oversized-parking-app-3s4btt && git checkout claude/oversized-parking-app-3s4btt && git pull --rebase`
+2. `npx tsx scripts/research-next.ts 50` lists the next garages (biggest
+   metros in rotation, largest garages first).
+3. For each garage, search the web (two searches at most), for example
+   `"<name>" <address or metro> parking garage clearance height`, and for
+   operators `<operator> <name> garage max vehicle height`.
+4. Record the outcome of **every** garage, found or not (see below).
+5. `npm test` (checks the CSV files parse), then commit and push:
+   `git add research && git commit -m "Research: <n> garages, <m> heights found"`
+   and `git push -u origin claude/oversized-parking-app-3s4btt` (on rejection:
+   `git pull --rebase`, then push again).
+6. Add a line to the log at the end of this file.
+
+Stop after 50 garages or about an hour, whichever comes first.
+
+## What counts
+
+- **operator**: the garage's own site, its operator (SP+, LAZ, ABM, Impark,
+  Propark, Towne Park...), a city / parking authority / airport / university
+  page. Preferred.
+- **listing**: a third-party listing that states a height for this garage
+  (ParkWhiz "Max Vehicle Height", SpotHero, Parkopedia, ParkMe, BestParking,
+  Apple Maps). Acceptable.
+- Not acceptable: forum guesses, "typically about 7 ft" articles, AI-written
+  guide sites, heights read from Street View or other photos.
+- The source must clearly be **this** garage (same name/address). If not sure,
+  record `ambiguous` and move on.
+- Sources disagree: use the lowest from an operator page if there is one;
+  otherwise record `conflict` with both numbers in the note.
+- Several entrances with different heights: record the main entrance in
+  `clearance` and the others in `note` ("Level 1 8'2"; upper levels 6'10"").
+- While there, also take price, hours and phone from the same source when shown.
+
+## Where to write
+
+- Found → a row in `research/garages.csv` (columns explained in README.md):
+  `osm_id,name,clearance,price,hours,access,phone,source,source_url,checked,note`.
+  Use `access` = `yes` only when the source shows it's open to the public.
+- Every garage searched (found or not) → a row in `research/searched.csv`:
+  `osm_id,name,checked,result,note` with `result` one of `found`, `none`,
+  `conflict`, `ambiguous`, `closed`.
+- Never edit or delete existing rows written by people; add new ones only.
+
+## Log
+
+| Date | Searched | Heights found | Notes |
+|---|---|---|---|
