@@ -14,6 +14,7 @@ import { createInterface } from 'node:readline';
 
 import { parseHeight } from '../src/lib/height';
 import { parseOverpass } from '../src/lib/osm';
+import { applyEntrances, EntranceIndex, entranceFrom } from '../src/lib/entrances';
 import { isDumpStation, isLowClearanceCandidate } from '../src/lib/nearby';
 import {
   isLibraryCandidate,
@@ -213,6 +214,7 @@ async function main() {
   let read = 0;
   let kept = 0;
   const extras = { h: 0, d: 0 };
+  const entrances = new EntranceIndex();
   const bounds = { minLat: Infinity, maxLat: -Infinity, minLon: Infinity, maxLon: -Infinity };
 
   const lines = createInterface({ input: createReadStream(input), crlfDelay: Infinity });
@@ -223,10 +225,17 @@ async function main() {
     const f = JSON.parse(line) as Feature;
     const tags = f.properties ?? {};
     const extra = isLowClearanceCandidate(tags) ? 'h' : isDumpStation(tags) ? 'd' : null;
-    if (!extra && !isLibraryCandidate(tags)) continue;
+    const door = tags.amenity === 'parking_entrance' || tags.barrier === 'height_restrictor' || tags.highway === 'service';
+    if (!extra && !door && !isLibraryCandidate(tags)) continue;
     const center = centerOf(f.geometry);
     const osm = osmIdOf(f.id ?? '');
     if (!center || !osm) continue;
+    if (door) {
+      // Garage entrances, ramps and bars: matched to garages after the loop.
+      const e = entranceFrom(tags, center[1], center[0]);
+      if (e) entrances.add(e);
+      if (!extra) continue;
+    }
     if (extra) {
       // Low bridges/barriers and dump stations ride along in the same tiles.
       const rec: TileRecord = [extra, osm[1], Math.round(center[1] * 1e5) / 1e5, Math.round(center[0] * 1e5) / 1e5, slimExtraTags({ ...tags, osm: osm[0] })];
@@ -254,6 +263,15 @@ async function main() {
     bounds.maxLon = Math.max(bounds.maxLon, record[3]);
     kept++;
   }
+
+  // Heights mapped on a garage's entrance, ramp or bar count for the garage.
+  const fromEntrances = applyEntrances(
+    (function* () {
+      for (const records of tiles.values()) yield* records.values();
+    })(),
+    entrances,
+  );
+  console.log(`garage heights taken from their entrance/ramp/bar: ${fromEntrances}`);
 
   // Places from our own research that OpenStreetMap doesn't have, kept to
   // this region's bounding box (so a later region doesn't re-add them).

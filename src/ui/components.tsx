@@ -25,8 +25,14 @@ export function clearanceText(c: Clearance): string {
   return 'Clearance unknown';
 }
 
+/** Badge colors for code-based estimates (no posted height): lighter versions of fits / too low. */
+const LIKELY_COLORS = {
+  fits: { bg: '#ECFDF5', fg: '#166534', icon: 'checkmark-circle-outline', label: 'Likely fits' },
+  'too-low': { bg: '#FEF2F2', fg: '#991B1B', icon: 'close-circle-outline', label: 'Likely too low' },
+} as const;
+
 export function FitBadge({ fit, large }: { fit: FitResult; large?: boolean }) {
-  const c = fitColors[fit.status];
+  const c = fit.status === 'unknown' && fit.likely ? LIKELY_COLORS[fit.likely] : fitColors[fit.status];
   return (
     <View style={[styles.badge, { backgroundColor: c.bg }, large && styles.badgeLarge]}>
       <Ionicons name={c.icon as IconName} size={large ? 18 : 14} color={c.fg} />

@@ -3,7 +3,7 @@
 
 import { parseHeight, type Clearance } from './height';
 import { parseLengthMeters } from './nearby';
-import type { AccessLevel, FeeStatus, ParkingSpot, ResearchNote, SpotKind } from './types';
+import type { AccessLevel, FeeStatus, LatLng, ParkingSpot, ResearchNote, SpotKind } from './types';
 
 export interface OverpassElement {
   /** OpenStreetMap types, or 'place' for a garage from our own research. */
@@ -201,6 +201,11 @@ function amenitiesFor(kind: SpotKind, tags: Record<string, string>): string[] {
   return out;
 }
 
+function entranceOf(v?: string): LatLng | undefined {
+  const m = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/.exec(v ?? '');
+  return m ? { latitude: Number(m[1]), longitude: Number(m[2]) } : undefined;
+}
+
 function toInt(v?: string): number | undefined {
   if (!v) return undefined;
   const n = parseInt(v, 10);
@@ -233,6 +238,8 @@ export function elementToSpot(el: OverpassElement, fetchedAt: string): ParkingSp
     longitude,
     clearance,
     clearanceRaw: raw,
+    clearanceFrom: /^(entrance|ramp|barrier)$/.test(tags['maxheight:source'] ?? '') ? (tags['maxheight:source'] as 'entrance' | 'ramp' | 'barrier') : undefined,
+    entrance: entranceOf(tags.entrance),
     fee,
     price: tags.charge,
     feeHours,

@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
+import { streetViewUrls } from '../lib/streetview';
+import type { LatLng } from '../lib/types';
 import { colors, radius } from './theme';
 
 /**
@@ -10,9 +12,29 @@ import { colors, radius } from './theme';
  * entrance, ramps and overhangs before they go. Tapping it calls `onPress`
  * (directions).
  */
-export function MiniMap({ latitude, longitude, onPress }: { latitude: number; longitude: number; onPress: () => void }) {
+export function MiniMap({
+  latitude,
+  longitude,
+  entrance,
+  onPress,
+}: {
+  latitude: number;
+  longitude: number;
+  /** The vehicle entrance, when mapped: shown as its own pin, and Street View looks at it. */
+  entrance?: LatLng;
+  onPress: () => void;
+}) {
   const [satellite, setSatellite] = useState(false);
   const coordinate = { latitude, longitude };
+  const openStreetView = async () => {
+    // The Google Maps app's Street View first; the web version if the app isn't installed.
+    for (const url of streetViewUrls({ latitude, longitude, entrance }, Platform.OS)) {
+      try {
+        await Linking.openURL(url);
+        return;
+      } catch {}
+    }
+  };
   return (
     <View style={styles.wrap}>
       <MapView
@@ -29,6 +51,7 @@ export function MiniMap({ latitude, longitude, onPress }: { latitude: number; lo
         accessibilityLabel="Map of this parking location. Tap for directions."
       >
         <Marker coordinate={coordinate} onPress={onPress} />
+        {entrance && <Marker coordinate={entrance} pinColor="#F59E0B" title="Vehicle entrance" onPress={onPress} />}
       </MapView>
       <View style={styles.toggle}>
         {([false, true] as const).map((sat) => (
@@ -46,13 +69,13 @@ export function MiniMap({ latitude, longitude, onPress }: { latitude: number; lo
       <View style={styles.actions}>
         <Pressable
           // Opens Google's own Street View so drivers can see the entrance and its clearance sign.
-          onPress={() => Linking.openURL(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${latitude},${longitude}`)}
+          onPress={openStreetView}
           style={styles.hint}
           accessibilityRole="button"
           accessibilityLabel="Look at the entrance in Street View"
         >
           <Ionicons name="eye-outline" size={13} color={colors.primary} />
-          <Text style={styles.hintText}>Street View</Text>
+          <Text style={styles.hintText}>{entrance ? 'See entrance' : 'Street View'}</Text>
         </Pressable>
         <Pressable onPress={onPress} style={styles.hint} accessibilityRole="button">
           <Ionicons name="navigate" size={13} color={colors.primary} />

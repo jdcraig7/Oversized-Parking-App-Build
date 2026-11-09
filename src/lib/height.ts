@@ -86,7 +86,20 @@ export interface FitResult {
   status: FitStatus;
   /** Clearance minus vehicle height, in meters, when the clearance is known. */
   spareMeters?: number;
+  /**
+   * For covered parking with no posted clearance: what building codes make
+   * likely. Garages must be at least 7'0" inside (IBC 406), older ones can be
+   * lower (6'6"-6'8"), and few are taller than the 8'2" required on the route
+   * to van-accessible spaces (ADA 502.5). So a vehicle (plus margin) of 6'4"
+   * or less almost always fits, and one taller than 8'2" almost never does.
+   */
+  likely?: 'fits' | 'too-low';
 }
+
+/** Below this (vehicle + margin), an unposted garage almost always fits. */
+export const LIKELY_FITS_BELOW_M = 1.93; // 6'4"
+/** Above this vehicle height, an unposted garage almost never fits. */
+export const LIKELY_TOO_LOW_ABOVE_M = 2.489; // 8'2"
 
 /**
  * Decides whether a vehicle fits.
@@ -96,7 +109,11 @@ export interface FitResult {
  */
 export function checkFit(clearance: Clearance, vehicleMeters: number, marginMeters: number): FitResult {
   if (clearance.status === 'open') return { status: 'fits' };
-  if (clearance.status === 'unknown') return { status: 'unknown' };
+  if (clearance.status === 'unknown') {
+    if (vehicleMeters + marginMeters <= LIKELY_FITS_BELOW_M) return { status: 'unknown', likely: 'fits' };
+    if (vehicleMeters > LIKELY_TOO_LOW_ABOVE_M) return { status: 'unknown', likely: 'too-low' };
+    return { status: 'unknown' };
+  }
   const spare = clearance.meters - vehicleMeters;
   // Compare in whole inches so rounding never turns "exactly equal" into "too low".
   const spareIn = Math.round(spare / METERS_PER_INCH);
@@ -117,6 +134,10 @@ export function describeFit(fit: FitResult): string {
     case 'too-low':
       return `Too low by ${formatFeetInches(-(fit.spareMeters ?? 0))}`;
     default:
-      return 'Clearance not reported';
+      return fit.likely === 'too-low'
+        ? 'Height not posted: almost certainly too low'
+        : fit.likely === 'fits'
+          ? 'Height not posted: very likely fits'
+          : 'Clearance not reported';
   }
 }

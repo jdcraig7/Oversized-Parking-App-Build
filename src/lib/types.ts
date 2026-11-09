@@ -43,6 +43,10 @@ export interface ParkingSpot {
   clearance: Clearance;
   /** The raw clearance value as published, for transparency. */
   clearanceRaw?: string;
+  /** Set when the height was mapped on the garage's entrance, ramp or bar rather than the garage itself. */
+  clearanceFrom?: 'entrance' | 'ramp' | 'barrier';
+  /** Where the vehicle entrance is, when mapped (for Street View and directions). */
+  entrance?: LatLng;
   fee: FeeStatus;
   /** Price text as published, e.g. "$3/hour; $20/day". */
   price?: string;

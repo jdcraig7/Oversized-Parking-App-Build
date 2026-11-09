@@ -143,7 +143,7 @@ export const slimExtraTags = (tags: Record<string, string>) =>
 const KEEP_KEYS = new Set([
   'amenity', 'parking', 'name', 'brand', 'operator', 'access', 'fee', 'charge', 'fee:conditional',
   'opening_hours', 'capacity', 'capacity:hgv', 'capacity:disabled', 'capacity:charging', 'maxstay',
-  'maxheight', 'maxheight:physical', 'maxheight:signed', 'covered', 'hgv', 'access:hgv', 'bus', 'motorhome',
+  'maxheight', 'maxheight:physical', 'maxheight:signed', 'maxheight:source', 'entrance', 'covered', 'hgv', 'access:hgv', 'bus', 'motorhome',
   'supervised', 'surveillance', 'lit', 'overnight', 'maxlength', 'caravans', 'capacity:caravans', 'capacity:motorhome', 'toilets', 'shower', 'fuel:diesel', 'park_ride', 'motorcar:charging',
   'phone', 'contact:phone', 'website', 'contact:website', 'url', 'description',
   'addr:housenumber', 'addr:street', 'addr:city', 'addr:state', 'addr:postcode',

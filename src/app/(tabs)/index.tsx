@@ -440,7 +440,7 @@ export default function SearchScreen() {
                 <Marker
                   key={r.spot.id}
                   coordinate={r.spot}
-                  pinColor={fitColors[r.fit.status].pin}
+                  pinColor={fitColors[r.fit.status === 'unknown' && r.fit.likely ? r.fit.likely : r.fit.status].pin}
                   tracksViewChanges={false}
                   onPress={(e) => {
                     e.stopPropagation();

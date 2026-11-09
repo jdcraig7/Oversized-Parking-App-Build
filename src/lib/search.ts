@@ -67,6 +67,8 @@ export function overnightBlocked(spot: ParkingSpot): boolean {
 }
 
 const FIT_RANK: Record<FitResult['status'], number> = { fits: 0, tight: 1, unknown: 2, 'too-low': 3 };
+/** Estimated fits sort just after measured ones; estimated too-low just before measured too-low. */
+const fitRank = (f: FitResult) => FIT_RANK[f.status] + (f.likely === 'fits' ? -0.5 : f.likely === 'too-low' ? 0.5 : 0);
 const FEE_RANK = { free: 0, unknown: 1, paid: 2 } as const;
 
 export function evaluate(
@@ -96,7 +98,7 @@ export function applyFilters(results: SpotResult[], filters: SearchFilters): Spo
     // Employee, resident and permit lots are never useful to a visiting driver.
     if (spot.access === 'restricted') return false;
     if (filters.publicOnly && spot.access !== 'public') return false;
-    if (filters.hideTooLow && (fit.status === 'too-low' || tooLong)) return false;
+    if (filters.hideTooLow && (fit.status === 'too-low' || fit.likely === 'too-low' || tooLong)) return false;
     if (filters.hideUnknown && fit.status === 'unknown') return false;
     if (filters.freeOnly && spot.fee !== 'free') return false;
     if (filters.garagesOnly && !spot.covered) return false;
@@ -110,7 +112,7 @@ export function applyFilters(results: SpotResult[], filters: SearchFilters): Spo
   const byDistance = (a: SpotResult, b: SpotResult) => a.distance - b.distance;
   const sorters: Record<SortOrder, (a: SpotResult, b: SpotResult) => number> = {
     distance: byDistance,
-    'best-fit': (a, b) => FIT_RANK[a.fit.status] - FIT_RANK[b.fit.status] || byDistance(a, b),
+    'best-fit': (a, b) => fitRank(a.fit) - fitRank(b.fit) || byDistance(a, b),
     'free-first': (a, b) => FEE_RANK[a.spot.fee] - FEE_RANK[b.spot.fee] || byDistance(a, b),
   };
   return filtered.sort(sorters[filters.sort]);

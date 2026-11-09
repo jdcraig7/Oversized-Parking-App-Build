@@ -37,7 +37,7 @@ for r in $regions; do
     echo "$r: checksum mismatch, start again"; rm -f "$r.osm.pbf"; exit 1
   fi
   osmium fileinfo -g header.option.osmosis_replication_timestamp "$r.osm.pbf" | cut -c1-10 > "$r.date" || true
-  osmium tags-filter "$r.osm.pbf" nwr/amenity=parking nwr/amenity=fuel nwr/amenity=sanitary_dump_station nw/maxheight nw/maxheight:physical -o "$r.parking.pbf.tmp" -f pbf --overwrite
+  osmium tags-filter "$r.osm.pbf" nwr/amenity=parking nwr/amenity=fuel nwr/amenity=sanitary_dump_station n/amenity=parking_entrance nw/maxheight nw/maxheight:physical -o "$r.parking.pbf.tmp" -f pbf --overwrite
   mv "$r.parking.pbf.tmp" "$r.parking.pbf"
   rm -f "$r.osm.pbf"
   echo "$(date -u +%T) $r: filtered"

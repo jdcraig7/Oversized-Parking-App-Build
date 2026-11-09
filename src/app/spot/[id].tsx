@@ -69,6 +69,11 @@ export default function SpotScreen() {
   const { clearance, source } = resolveClearance(spot, report, drivers);
   const phone = spot.phone ?? report?.phone;
   const call = () => Linking.openURL(`tel:${phone!.replace(/[^\d+]/g, '')}`);
+  // No height on record: search the web for the garage's posted clearance.
+  const findClearance = () =>
+    Linking.openURL(
+      `https://www.google.com/search?q=${encodeURIComponent(`"${spot.name}" ${spot.address ?? ''} parking garage clearance height`)}`,
+    );
   // No number on record: search the web for it (name + address).
   const findPhone = () =>
     Linking.openURL(
@@ -76,7 +81,7 @@ export default function SpotScreen() {
     );
   const price = resolvePrice(spot, report, drivers);
   const fit = checkFit(clearance, settings.vehicleMeters, settings.marginMeters);
-  const fitStyle = fitColors[fit.status];
+  const fitStyle = fitColors[fit.status === 'unknown' && fit.likely ? fit.likely : fit.status];
   const savedNow = isSaved(spot.id);
   // A place that only exists as a sponsor listing (not in the map data).
   const sponsorOnly = spot.id.startsWith('sponsor:');
@@ -100,7 +105,8 @@ export default function SpotScreen() {
   };
 
   const directions = () => {
-    const { latitude: lat, longitude: lon } = spot;
+    // Drive to the vehicle entrance when it's mapped, not the middle of the building.
+    const { latitude: lat, longitude: lon } = spot.entrance ?? spot;
     const open = (url: string) => Linking.openURL(url).catch(() => Alert.alert('Could not open maps'));
     const options = [
       ...(Platform.OS === 'ios' ? [{ text: 'Apple Maps', onPress: () => open(`http://maps.apple.com/?daddr=${lat},${lon}&dirflg=d`) }] : []),
@@ -129,7 +135,7 @@ export default function SpotScreen() {
           </View>
         </View>
 
-        <MiniMap latitude={spot.latitude} longitude={spot.longitude} onPress={directions} />
+        <MiniMap latitude={spot.latitude} longitude={spot.longitude} entrance={spot.entrance} onPress={directions} />
 
         {spot.access !== 'public' && (
           <Card style={styles.accessWarning}>
@@ -178,10 +184,16 @@ export default function SpotScreen() {
                 : clearance.status === 'open'
                 ? 'Open-air parking: nothing overhead is recorded. Watch for entry barriers, trees and wires.'
                 : clearance.status === 'unknown'
-                  ? `No clearance on record for this structure yet. Standard garages are often around 7 ft${settings.vehicleMeters >= 2.08 ? ', so a vehicle your height may not fit' : ''}. Check the sign at the entrance (tap Street View on the map above to look first), or call ahead.`
+                  ? fit.likely === 'too-low'
+                    ? `No height posted for this garage, but almost none are taller than 8'2" (the height codes require for van-accessible parking), so a ${formatFeetInches(settings.vehicleMeters)} vehicle won't fit. Look for open-air lots or truck parking instead.`
+                    : fit.likely === 'fits'
+                      ? `No height posted, but garages are built to at least 6'6"–7'0" inside, so a ${formatFeetInches(settings.vehicleMeters)} vehicle should fit. Still check the sign at the entrance.`
+                      : `No height posted for this garage yet. Most are 6'8"–7'0" inside and some have an 8'2" entrance for van-accessible spaces, so a ${formatFeetInches(settings.vehicleMeters)} vehicle may or may not fit. Check the sign (Street View on the map above), call ahead, or tap Search for clearance below.`
                   : spot.research
                     ? `Clearance from ${RESEARCH_SOURCE_TEXT[spot.research.source]}${spot.research.checked ? `, checked ${spot.research.checked}` : ''}. ${spot.research.note ? `${spot.research.note} ` : ''}Always check the posted sign.`
-                    : `Published clearance: ${spot.clearanceRaw}.`}
+                    : spot.clearanceFrom
+                      ? `Height mapped on the garage's ${spot.clearanceFrom === 'ramp' ? 'entrance ramp' : spot.clearanceFrom === 'barrier' ? 'entrance bar' : 'entrance'}: ${spot.clearanceRaw}. Check the posted sign.`
+                      : `Published clearance: ${spot.clearanceRaw}.`}
           </Text>
           {clearance.status === 'unknown' && !sponsorOnly && (
             <View style={styles.unknownActions}>
@@ -190,6 +202,9 @@ export default function SpotScreen() {
               )}
               <Button title="I know the clearance" icon="create-outline" variant="secondary" onPress={() => router.push({ pathname: '/report/[id]', params: { id: spot.id } })} style={{ flex: 1 }} />
             </View>
+          )}
+          {clearance.status === 'unknown' && !sponsorOnly && !spot.unnamed && (
+            <Button title="Search the web for its clearance" icon="search-outline" variant="secondary" onPress={findClearance} />
           )}
           {!!spot.research?.url && clearance.status === 'limited' && source === 'map' && (
             <Text style={styles.sourceLink} onPress={() => Linking.openURL(spot.research!.url!)}>
