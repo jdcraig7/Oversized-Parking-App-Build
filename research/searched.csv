@@ -1,1 +1,33 @@
 osm_id,name,checked,result,note
+relation/15984779,Parking 2,2026-11-10,found,
+relation/4676514,The Autopark at 8th & Filbert,2026-11-10,found,
+way/297682281,17th Street Parking Garage (G5),2026-11-10,found,
+node/1037993335,Kaiser Center Parking Garage,2026-11-10,found,
+way/1215525137,The Waterfront Vancouver Parking Center,2026-11-10,found,
+way/318435093,Columbus Convention Center - Vine Street Garage,2026-11-10,found,
+relation/13509190,North Parking Garage,2026-11-10,found,
+way/1300374465,Water Street Garage,2026-11-10,found,
+way/49237184,Augspurger Ramp,2026-11-10,found,
+way/99029169,Blount Street Parking Deck,2026-11-10,found,
+way/583796860,Terminal B Parking Garage,2026-11-10,none,
+way/983655045,LAX West Intermodal Transportation Facility,2026-11-10,none,
+way/769452758,McCormick Place Parking Lot A,2026-11-10,ambiguous,"Only third-party event guides say 8'0""; no official source."
+node/12358729868,Theatre District Underground Parking Garage (Yellow),2026-11-10,ambiguous,"Visit Houston says 6'7"" for the underground complex, ParkWhiz 6'8""; none names the Yellow garage."
+way/901848459,ATL West Parking Deck,2026-11-10,none,
+way/199128922,Blue Garage,2026-11-10,none,"Gold Garage listed 7'4"" elsewhere; Blue not found."
+way/136721314,Route 128 Station Garage,2026-11-10,ambiguous,"Only MapQuest says 10'10""; not trusted."
+way/105360165,MGM Grand Parking Structure,2026-11-10,none,
+way/1178812355,Lynnwood Transit Center Garage,2026-11-10,none,
+way/81049104,Gateway Municipal Garage,2026-11-10,none,
+way/25645910,Pam Iorio Parking Garage,2026-11-10,ambiguous,"City of Tampa page seems to say 6'8"" but layout is unclear."
+way/39623389,Hopkins Parking Structure,2026-11-10,none,
+way/184094180,Lincoln Station Park-n-Ride,2026-11-10,ambiguous,"Parking.com says 7'0"" but at a different Station Way address."
+way/827224008,Parking Garage C,2026-11-10,none,
+way/692015350,Austin–Bergstrom International Airport Blue Garage,2026-11-10,ambiguous,"Third-party guides say 8'0"" (one says 7'0""); no official page."
+way/902340300,Garage Mahal at Circa Resort & Casino,2026-11-10,ambiguous,"Only a Las Vegas blog says 8'2""."
+way/25304278,Pavilion Parking Structure,2026-11-10,none,
+way/185574340,Calhoun Garage,2026-11-10,none,
+way/412834341,Constant Center 43rd Street Garage,2026-11-10,ambiguous,"ODU pages give 8'2""/7'1"" and 8'6""/7'2"" but unclear which garage."
+way/972044105,North Garage,2026-11-10,none,
+relation/3335980,Santa Fe Parking Garage,2026-11-10,none,Height is on parkingokc.com; not retrieved.
+way/330980938,Chestnut Street Outpatient Center Parking Garage,2026-11-10,none,
