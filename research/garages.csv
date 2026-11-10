@@ -99,3 +99,8 @@ relation/13509190,North Parking Garage,"6'8""",,,,,listing,https://en.parkopedia
 way/1300374465,Water Street Garage,"7'0""",,,,,listing,https://parkmobile.io/parking/locations/wi/milwaukee-parking/parking-lot/water-street-parking-garage,2026-11-10,"ParkWhiz and ParkMobile list 1059 N Market St (ABM) at max 7'0""."
 way/49237184,Augspurger Ramp,"6'10""",,,,,operator,https://bcarparking.com/parking-locations,2026-11-10,"Buffalo Civic Auto Ramps location list: Augspurger Ramp, 362 Pearl St, 6'10""."
 way/99029169,Blount Street Parking Deck,"9'0""",,,,,operator,https://raleighnc.gov/parking/places/blount-street-parking-deck,2026-11-10,"City of Raleigh page: 314 Blount St, clearance 9'0"". Public parking weekdays 7am-7pm only."
+way/43194557,Garage 1,"8'2""",,,,,operator,https://www.flydulles.com/iad/parking-frequently-asked-questions,2026-11-10,Dulles FAQ: height restriction 8 ft 2 in in Garages 1 and 2.
+way/252221802,Philadelphia Gateway,"6'10""",,,,,operator,https://philapark.org/?p=27033,2026-11-10,"PPA page: 1540 Vine St, entrances on Spring and 16th Streets."
+way/129400661,McCormick Place Parking Lot C,"6'4""",,,,,operator,https://www.mccormickplace.com/getting-here/parking-rates/,2026-11-10,"McCormick Place parking page: Lot C underground, 1,900 spaces. Parking.com lists 6'2""; used the venue figure."
+way/47386652,Jack London Market Parking Garage,"8'0""",,,,,operator,https://lots.impark.com/IMP/en/details/74/4?csr=0,2026-11-10,"Impark Lot 4 (255 2nd St): max height 8'0""; open 24/7."
+node/7189269479,Block89 Underground Parking,"7'0""",,,,,operator,https://uli.com/node/1715,2026-11-10,"ULI monthly parking document: P-1 up to 8'2""; P-2 to P-5 designed for 7'0"". Used the lower figure."
