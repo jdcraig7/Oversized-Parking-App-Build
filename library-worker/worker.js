@@ -3,6 +3,7 @@
 //
 //   manifest.json                  the library index
 //   v1/<lat>/<lon>.json?v=<hash>   one tile (what the app asks for)
+//   (root)                         the landing page
 //   privacy                        the app's privacy policy page
 //
 // To stay inside KV's free 1,000 writes/day, tiles are stored in bundles of
@@ -51,6 +52,10 @@ export default {
     if (path === 'manifest.json') {
       const body = await env.LIBRARY.get('manifest.json', { cacheTtl: 60 });
       return body === null ? notFound() : reply(body, 'application/json', 'public, max-age=300');
+    }
+    if (path === '' || path === 'index.html') {
+      const body = await env.LIBRARY.get('site/index.html', { cacheTtl: 300 });
+      return body === null ? notFound() : reply(body, 'text/html; charset=utf-8', 'public, max-age=3600');
     }
     if (path === 'privacy' || path === 'privacy.html') {
       const body = await env.LIBRARY.get('site/privacy.html', { cacheTtl: 300 });

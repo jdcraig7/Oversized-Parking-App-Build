@@ -131,6 +131,8 @@ async function main() {
   ];
   const privacy = readFileSync(new URL('../library-worker/privacy.html', import.meta.url), 'utf8');
   if ((await read('site/privacy.html')) !== privacy) finalWrites.push({ key: 'site/privacy.html', value: privacy });
+  const landing = readFileSync(new URL('../library-worker/index.html', import.meta.url), 'utf8');
+  if ((await read('site/index.html')) !== landing) finalWrites.push({ key: 'site/index.html', value: landing });
   await cf(`${kv}/bulk`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(finalWrites) });
   console.log(`KV: ${toWrite.length} bundles written, ${toWrite.length + finalWrites.length} writes; library total ${manifest.total}`);
   if (changed.length > toWrite.length) console.log(`${changed.length - toWrite.length} bundles left for the next run (daily write limit)`);
