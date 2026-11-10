@@ -148,3 +148,14 @@ describe('Overpass states (Alaska, Hawaii)', () => {
     assert.equal(toFeatureLine({ type: 'node', id: 1, lat: 1, lon: 2 }), null); // no tags
   });
 });
+
+describe('research sheets', () => {
+  it('skips the research job bookkeeping files', async () => {
+    const { isResearchSheet } = await import('../scripts/build-parking-library');
+    assert.ok(isResearchSheet('garages.csv'));
+    assert.ok(!isResearchSheet('places.csv'));
+    assert.ok(!isResearchSheet('queue.csv'));
+    assert.ok(!isResearchSheet('searched.csv'));
+    assert.ok(!isResearchSheet('README.md'));
+  });
+});

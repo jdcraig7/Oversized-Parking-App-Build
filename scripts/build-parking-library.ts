@@ -152,12 +152,19 @@ export function researchPlaces(file: string): TileRecord[] {
   });
 }
 
+/**
+ * Research sheets with heights per OpenStreetMap id (garages.csv and any
+ * others like it). places.csv is read separately; queue.csv and searched.csv
+ * are the daily research job's bookkeeping, not data.
+ */
+export const isResearchSheet = (file: string) => file.endsWith('.csv') && !['places.csv', 'queue.csv', 'searched.csv'].includes(file);
+
 /** Merges research/*.csv into the tile records. Returns [applied, not found]. */
 function applyResearch(records: Map<string, TileRecord>, dir: string): [number, string[]] {
   if (!existsSync(dir)) return [0, []];
   let applied = 0;
   const missing: string[] = [];
-  for (const file of readdirSync(dir).filter((f) => f.endsWith('.csv') && f !== 'places.csv')) {
+  for (const file of readdirSync(dir).filter(isResearchSheet)) {
     for (const row of parseCsv(readFileSync(join(dir, file), 'utf8'))) {
       const m = /^(node|way|relation)\/(\d+)$/.exec(row.osm_id ?? '');
       if (!m) throw new Error(`${file}: bad osm_id "${row.osm_id}"`);
