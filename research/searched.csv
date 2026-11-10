@@ -57,3 +57,13 @@ way/178083545,Convention Parking,2026-11-10,none,
 way/229832291,Brady Street Garage,2026-11-10,none,
 way/892852134,Lindbergh Center Park & Ride,2026-11-10,none,
 way/60966040,Main Park Plaza,2026-11-10,ambiguous,Address 423 S Boulder does not match listings (410 S Main / 415 S Boulder); no height found.
+way/52975536,SmartPark,2026-11-10,found,
+way/763282655,Convention Center Underground Deck,2026-11-10,found,
+way/31464651,South Parking Garage,2026-11-10,found,
+way/271049768,First Avenue Garage,2026-11-10,found,
+way/316601836,Arts District Garage,2026-11-10,ambiguous,"Only conference parking maps say 8'2"" (earlier version 8'); no city page."
+way/49238303,Fernbach Ramp,2026-11-10,none,"An earlier search summary suggested 6'9"" from BCAR; not confirmed this run."
+way/313089120,Garrahy Garage,2026-11-10,none,Address 181 Dorrance does not match known Garrahy listings (75 Clifford St).
+way/1219423026,Mobility Center,2026-11-10,none,
+node/14265442055,Market Square Center Garage,2026-11-10,none,
+relation/4731430,Floyd Street Parking Garage,2026-11-10,none,

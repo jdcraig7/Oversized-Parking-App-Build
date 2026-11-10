@@ -57,3 +57,4 @@ Stop after 50 garages or about an hour, whichever comes first.
 | 2026-11-10 | 32 | 10 | Stopped early at 32 (one search each). Many 'none' because heights sit on pages search did not surface. |
 | 2026-11-10 (2nd run) | 14 | 5 | One search each; stopped early. |
 | 2026-11-10 (3rd run) | 12 | 1 | One search each; stopped early. Many garages' heights are on pages search does not surface. |
+| 2026-11-10 (4th run) | 10 | 4 | One search each; stopped early. |
