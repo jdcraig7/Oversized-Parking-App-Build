@@ -104,3 +104,4 @@ way/252221802,Philadelphia Gateway,"6'10""",,,,,operator,https://philapark.org/?
 way/129400661,McCormick Place Parking Lot C,"6'4""",,,,,operator,https://www.mccormickplace.com/getting-here/parking-rates/,2026-11-10,"McCormick Place parking page: Lot C underground, 1,900 spaces. Parking.com lists 6'2""; used the venue figure."
 way/47386652,Jack London Market Parking Garage,"8'0""",,,,,operator,https://lots.impark.com/IMP/en/details/74/4?csr=0,2026-11-10,"Impark Lot 4 (255 2nd St): max height 8'0""; open 24/7."
 node/7189269479,Block89 Underground Parking,"7'0""",,,,,operator,https://uli.com/node/1715,2026-11-10,"ULI monthly parking document: P-1 up to 8'2""; P-2 to P-5 designed for 7'0"". Used the lower figure."
+way/31791135,Cherry Avenue Garage,"7'0""",,,,,operator,https://parking.arizona.edu/parking/garages/garage-heights/,2026-11-10,"University garage heights page lists the shortest clearance in Cherry Ave. Garage as 7'0""."

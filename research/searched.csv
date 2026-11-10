@@ -45,3 +45,15 @@ way/1327767000,Mill Avenue Parking Structure,2026-11-10,none,
 way/134921833,Parking Structure 4,2026-11-10,none,
 way/1122683262,Cumberland Parking Garage,2026-11-10,none,
 way/406923916,Downey Way Parking Structure,2026-11-10,none,"USC says structures range 6'2""-8'2""; none specific."
+way/31791135,Cherry Avenue Garage,2026-11-10,found,
+relation/5933200,Hourly Parking Deck,2026-11-10,ambiguous,Only the valet area on Level 1 is stated (7'); third-party guides say about 7 ft.
+way/1057643438,(no name),2026-11-10,ambiguous,"Only third-party guides say 8'0""/8'2""; no official page."
+relation/18669951,Terminal Garage,2026-11-10,ambiguous,"Third-party booking sites say 6'8""; airport page gives only an 8 ft oversized threshold."
+node/2970525432,Park Place Garage,2026-11-10,ambiguous,"A listing for 8 Taylor Ave says 6'10"" but may not be this garage."
+way/571767850,FedEx Forum Parking Garage,2026-11-10,none,
+way/737342000,MGM Springfield Parking Garage,2026-11-10,none,Only a Reddit comment about a Street View sign; not usable.
+way/61571716,Convention Center Garage,2026-11-10,none,
+way/178083545,Convention Parking,2026-11-10,none,
+way/229832291,Brady Street Garage,2026-11-10,none,
+way/892852134,Lindbergh Center Park & Ride,2026-11-10,none,
+way/60966040,Main Park Plaza,2026-11-10,ambiguous,Address 423 S Boulder does not match listings (410 S Main / 415 S Boulder); no height found.
