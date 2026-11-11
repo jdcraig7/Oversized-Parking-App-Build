@@ -25,7 +25,8 @@ export default function TripScreen() {
   const { trips, saveTrip, deleteTrip, settings, reports } = useAppState();
   const { summaries, load } = useCommunity();
   const trip = trips.find((t) => t.id === id);
-  const [name, setName] = useState(trip?.name ?? '');
+  // Edited name while typing; null = show the saved name (which may load after the first render).
+  const [name, setName] = useState<string | null>(null);
 
   const stopIds = trip?.stops.map((s) => s.spot.id).join(',') ?? '';
   const [offline, setOffline] = useState<{ saved: number; total: number } | null>(null);
@@ -147,9 +148,12 @@ export default function TripScreen() {
       <Stack.Screen options={{ title: trip.name || 'Trip' }} />
 
       <TextInput
-        value={name}
+        value={name ?? trip.name}
         onChangeText={setName}
-        onEndEditing={() => update({ name: name.trim() || trip.name })}
+        onEndEditing={() => {
+          update({ name: name?.trim() || trip.name });
+          setName(null);
+        }}
         placeholder="Trip name"
         placeholderTextColor={colors.muted}
         style={styles.nameInput}
