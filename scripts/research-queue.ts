@@ -52,7 +52,7 @@ function main() {
     if (existsSync(p)) for (const r of parseCsv(readFileSync(p, 'utf8'))) done.add(r.osm_id);
   }
 
-  const rows: { metroRank: number; metro: string; cap: number; cols: (string | number | undefined)[] }[] = [];
+  const rows: { metroRank: number; metro: string; cap: number; findable: number; cols: (string | number | undefined)[] }[] = [];
   const types = { n: 'node', w: 'way', r: 'relation' } as const;
   for (const la of readdirSync(join(lib, 'v1'))) {
     for (const f of readdirSync(join(lib, 'v1', la))) {
@@ -76,10 +76,20 @@ function main() {
           }
         });
         const cap = Number(tags.capacity) || 0;
+        // How likely a height is published for it: a named garage with a known
+        // operator or website almost always has a page; park & rides and
+        // unnamed structures rarely do (measured: ~6% vs ~35% found).
+        const name = tags.name ?? '';
+        const findable =
+          (name ? 2 : 0) +
+          (tags.operator || tags.website || tags['contact:website'] ? 1 : 0) +
+          (/garage|parking structure|parkade|deck|ramp|center|plaza|airport|terminal/i.test(name) ? 1 : 0) -
+          (/park.?(and|&|n).?ride|park-n-ride|station|transit|employee|staff|resident/i.test(name) ? 2 : 0);
         rows.push({
           metroRank,
           metro,
           cap,
+          findable,
           cols: [osmId, tags.name, tags.operator, address, metro, lat, lon, cap || '', tags.website ?? tags['contact:website']],
         });
       }
@@ -88,7 +98,7 @@ function main() {
   // Round-robin across metros so every big city gets its largest garages done
   // early: each metro's #1 garage, then each metro's #2, ... Garages outside
   // the listed metros come last, largest first.
-  rows.sort((a, b) => a.metroRank - b.metroRank || b.cap - a.cap);
+  rows.sort((a, b) => a.metroRank - b.metroRank || b.findable - a.findable || b.cap - a.cap);
   const position = new Map<(typeof rows)[number], number>();
   const seenPerMetro = new Map<number, number>();
   for (const r of rows) {
@@ -96,7 +106,10 @@ function main() {
     position.set(r, r.metro ? n : Number.MAX_SAFE_INTEGER);
     seenPerMetro.set(r.metroRank, n + 1);
   }
-  rows.sort((a, b) => position.get(a)! - position.get(b)! || a.metroRank - b.metroRank || b.cap - a.cap);
+  // Within each round, the most findable first; low-findability garages
+  // (unnamed, park & rides) only after every metro's findable ones.
+  const tier = (r: (typeof rows)[number]) => (r.findable >= 2 ? 0 : 1);
+  rows.sort((a, b) => tier(a) - tier(b) || position.get(a)! - position.get(b)! || a.metroRank - b.metroRank || b.cap - a.cap);
   const header = 'rank,osm_id,name,operator,address,metro,lat,lon,capacity,website';
   const lines = rows.map((r, i) => [i + 1, ...r.cols].map(csvCell).join(','));
   writeFileSync(join(root, 'queue.csv'), [header, ...lines].join('\n') + '\n');
