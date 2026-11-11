@@ -133,3 +133,53 @@ way/138677223,Parking Terrace B-1,2026-11-11,none,
 way/217377317,(no name),2026-11-11,none,
 way/429123245,Parking Deck,2026-11-11,none,
 way/341313469,Cityway North Car Park,2026-11-11,none,"CityWay South is 8'2"" per Parkopedia, not North."
+way/329210899,City Center Parking Deck,2026-11-11,found,
+relation/6150076,Evan V. Jones Parkade,2026-11-11,found,
+way/26150431,Sheffield Parking Garage,2026-11-11,found,
+way/43035578,Texas Medical Center Garage 4,2026-11-11,found,
+way/339752637,Walnut Towers Garage,2026-11-11,found,
+way/326172610,Gateway Garage,2026-11-11,found,
+way/40007263,Indianapolis International Airport Parking Garage,2026-11-11,found,
+way/370044424,South Garage,2026-11-11,found,
+way/30905846,Trinity Garage,2026-11-11,found,
+way/56186648,Garage D,2026-11-11,found,
+way/176265189,Grant Street Transportation Center,2026-11-11,found,
+way/132570881,Central Library Parking Garage,2026-11-11,found,
+way/195939227,Arena Parking Garage,2026-11-11,found,
+way/500204486,Charlotte Plaza Parking,2026-11-11,found,
+way/156847519,Laclede Parking Garage,2026-11-11,found,
+way/24411625,Daily Garage,2026-11-11,found,
+way/140641493,Pointe Orlando Garage,2026-11-11,found,
+relation/2070477,Ballston Public Parking Garage,2026-11-11,ambiguous,"Parking.com lists 6'5"" for the 8th-floor ice arena level only; no whole-garage figure."
+way/59264067,River East Garage,2026-11-11,ambiguous,"Parking.com lists River East Garage at 226 Rivard (SP+) at 7'6""; OSM address is 214 Rivard (Central Parking)."
+way/259155860,Livermore Valley Center Parking,2026-11-11,ambiguous,"Listing says 8'2"" for 2350 Railroad Ave; unclear it is the Livermore Valley Center garage."
+way/31464654,North Parking Garage,2026-11-11,ambiguous,UConn Storrs visitor page says maximum height 8 ft but does not clearly label the North Garage.
+way/698958708,Pearl Street Garage,2026-11-11,none,
+way/375151628,Glendale Marketplace Parking Structure,2026-11-11,none,
+way/404997026,Parking Structure 1,2026-11-11,none,
+way/905687182,Orange Deck,2026-11-11,none,
+way/436126218,Garage 1,2026-11-11,none,
+way/325266674,3rd Ave Public Parking Garage,2026-11-11,none,Address mismatch between sources.
+way/154646622,MBTA Parking Garage,2026-11-11,none,Old Lynn garage is being demolished.
+way/45101471,West Parking Structure,2026-11-11,none,
+way/972172023,Kiku Crossing Parking Garage,2026-11-11,none,
+way/436819522,Angle Lake Garage,2026-11-11,none,
+way/278451554,Anoka Municipal Ramp,2026-11-11,none,
+way/160676198,Garden Avenue Parking Garage,2026-11-11,none,
+way/229095257,Jefferson County Government Center - Golden,2026-11-11,none,
+way/657585453,Wilford Hall Garage,2026-11-11,none,
+way/25397779,Parking Structure 1,2026-11-11,none,Staff-only structure.
+way/27146881,Cottage Grove Parking Garage,2026-11-11,none,Cottage Grove is a UNLV garage per search; no height found.
+way/35264588,Campus Green Garage,2026-11-11,none,
+way/203032617,Municipal Deck 20C,2026-11-11,none,
+way/445452177,Public Parking Deck,2026-11-11,none,
+node/13085682085,South Garage,2026-11-11,none,
+relation/15850389,Museum Center Park,2026-11-11,none,
+way/161390069,Oklahoma Memorial Union Parking Center,2026-11-11,none,
+way/126642292,Deloach Parking Garage,2026-11-11,none,University of Memphis garage per search.
+way/329524037,620 Health Sciences Center Garage,2026-11-11,none,
+way/45088994,JSRCC Parking Deck,2026-11-11,none,
+way/504032667,Northwest Garage,2026-11-11,none,
+way/327614512,Jena Parking Garage,2026-11-11,none,
+way/132016026,Walden Galleria Parking Garage,2026-11-11,none,
+way/491850846,North Parking Deck,2026-11-11,none,

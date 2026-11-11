@@ -61,3 +61,4 @@ Stop after 50 garages or about an hour, whichever comes first.
 | 2026-11-10 (5th run) | 8 | 5 | One search each; stopped early to resume the task list. |
 | 2026-11-11 | 8 | 2 | One search each (Dulles Garage 2 from the earlier Dulles FAQ). |
 | 2026-11-11 (full 50) | 50 | 3 | One search each, run directly (no subagents). Low yield: most remaining queue entries are unnamed or lack web pages. |
+| 2026-11-11 (2nd full 50) | 50 | 17 | One search each, run directly. Named campus and airport garages gave a much better yield (about a third). |
