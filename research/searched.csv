@@ -75,3 +75,11 @@ way/32974975,Second Street Garage,2026-11-10,found,
 way/1240876851,Boise Airport East Garage,2026-11-10,none,
 way/455141284,Athena Parking Structure,2026-11-10,none,
 way/161639678,Federal Way Downtown Station Parking,2026-11-10,none,
+way/43194638,Garage 2,2026-11-11,found,
+relation/17625327,Cumberland Park & Ride,2026-11-11,found,
+way/381111098,16th and Collins,2026-11-11,ambiguous,"Parking.com lists Miami Beach G4 (16th & Collins) at 6'8"", but the city names G4 as Anchor/16th Street Garage at 1557 Washington Ave."
+way/154976508,Civic Center Library Public Parking Garage,2026-11-11,none,
+way/867891404,Grapevine Main Street Parking Garage,2026-11-11,none,
+way/956530357,South Campus Garage - SJSU,2026-11-11,none,
+way/127683764,Cleveland Clinic Parking (P1),2026-11-11,none,
+way/955947794,West End Garage,2026-11-11,none,"Hamilton County West End Garage (1530 John St), SP+; no height found."
