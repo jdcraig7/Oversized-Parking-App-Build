@@ -182,3 +182,15 @@ way/302495610,Central Parking System - Constitution Center Parking,"6'8""",,,,,l
 node/4697959178,One Memorial Garage,"6'4""",,,,,listing,https://cambridgeusa.org/listing/one-memorial-garage,2026-11-11,Cambridge USA listing and Parkopedia agree.
 node/12896949903,Plaza Parking Garage,"6'8""",,,,,operator,https://abmparking.com/facilities/parking-for-117-s-12th-street-plaza/,2026-11-11,ABM listing; ParkWhiz agrees.
 way/991822963,Fernando Noriega Junior Garage,"8'2""",,,,,listing,https://en.parkopedia.com/parking/garage/palm_fernando_garage/33605/tampa/,2026-11-11,Parkopedia listing for 2010 N 13th St (Palm/Fernando garage).
+way/381834561,State Parking Garage R,"7'2""",,,,,listing,https://parkmobile.io/parking/locations/tx/austin-parking/parking-lot/garage-r,2026-11-11,"ParkMobile and ParkWhiz agree on 7'2"" for Garage R (1706 San Jacinto). A Parkopedia listing says 9'0"" for the neighbouring city garage; lower figure recorded."
+way/370099159,East Village Garage,"8'2""",,,,,listing,https://parking.com/kansas-city/lot/east-village-garage-910-cherry,2026-11-11,"Parking.com listing (901 Cherry St), single source."
+way/373547727,11th Avenue Garage,"7'0""",,,,,operator,https://osu.campusparc.com/find-parking/11th-avenue-garage,2026-11-11,Ohio State parking page.
+relation/6858127,Public Square Garage,"6'8""",,,,,listing,https://nashvilledowntown.com/parking/public-square-garage,2026-11-11,"Nashville Downtown Partnership lists 6'8"" for 350 Deaderick St; ParkWhiz agrees."
+way/54626014,330 Wells Garage,"6'8""",,,,,listing,https://parkmobile.io/parking/locations/wi/milwaukee-parking/parking-lot/330-w-wells-garage,2026-11-11,"ParkMobile and ParkWhiz say 6'8""; Parkopedia says 6'10"". Lower figure recorded."
+way/268207607,VCU Henry Street Parking Deck - East,"7'2""",,,,,operator,https://parking.vcu.edu/media/parking/DeckClearances(1).docx,2026-11-11,"VCU deck clearance list: Level 1 is 8'2"", all other levels 7'2"". Lower figure recorded."
+way/108352125,High Falls Parking Garage,"7'0""",,,,,operator,https://cityofrochester.gov/locations/high-falls-garage,2026-11-11,"City of Rochester: all upper levels 7'0"". City is selling the garage."
+way/229832328,Lincoln Avenue Garage,"8'0""",,,,,listing,https://en.parkopedia.com/parking/garage/boise_state_university_lincoln_avenue_garage/83706/boise,2026-11-11,"Parkopedia listing, single source."
+node/1859366370,Union South Garage,"8'2""",,,,,operator,https://kb.wisc.edu/cfye/27465,2026-11-11,UW-Madison page (Lot 80) gives the entrance clearance; page updated 2020-12-16.
+node/12480886213,Centerpark East 34th Street Parking Garage,"6'0""",,,,,listing,https://www.parkwhiz.ca/p/new-york-parking/333-e-34th-st/,2026-11-11,"ParkWhiz listing, single source."
+way/442771900,Medical Campus Parking Garage B,"8'2""",,,,,listing,https://en.parkopedia.com/parking/garage/the_university_of_chicago_medicine_medical_campus_parking_b/60637/chicago/,2026-11-11,"Parkopedia listing, single source."
+node/11972347573,84 Athenaeum St Garage,"6'4""",,,,,listing,https://www.parkwhiz.ca/p/cambridge-parking/84-athenaeum-st,2026-11-11,"ParkWhiz listing (Cambridge Riverview Center Garage, LAZ); may be dated."

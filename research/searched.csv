@@ -383,3 +383,53 @@ way/68495074,Parking Structure 4,2026-11-11,ambiguous,"Only a generic SDSU 7'4""
 way/162809280,Pavilion Towers Parking Garage,2026-11-11,none,
 way/316162899,Fayette Street Garage,2026-11-11,none,
 way/49840739,CentroPlex Garage II,2026-11-11,ambiguous,Address matches the city Amelia St Garage; no clearance found.
+way/922896416,Red Ventures Parking Garage 2,2026-11-11,none,
+way/320756996,Quik Park Garage,2026-11-11,none,
+way/51334466,Riverbend Parking Garage,2026-11-11,none,generic name; not searched
+way/381834561,State Parking Garage R,2026-11-11,found,
+way/331334439,Doernbecher Garage,2026-11-11,none,
+way/763230897,Parking Structure IV,2026-11-11,none,
+way/605752837,Crossroads Public Parking Garage,2026-11-11,none,
+way/206891069,North Garage,2026-11-11,none,generic name; not searched
+way/1476714108,Ziegler Park Garage,2026-11-11,ambiguous,"3CDC page shows 7'9"" but the page layout is jumbled; not clearly this garage."
+way/370099159,East Village Garage,2026-11-11,found,
+way/373547727,11th Avenue Garage,2026-11-11,found,
+way/200401386,Lot 68 - Campus Housing Deck,2026-11-11,none,
+way/53639569,South Garage,2026-11-11,none,
+relation/6858127,Public Square Garage,2026-11-11,found,
+way/93091438,Second Street Parking Garage,2026-11-11,ambiguous,Coordinates do not match the downtown 2nd/San Carlos garage; could not confirm which garage.
+way/407402143,MacArthur Center Parking,2026-11-11,ambiguous,"City of Norfolk lists 7' for both MacArthur Center garages; Parkopedia says 8'2"" for North only; unclear which this is."
+way/265733066,Sports Complex Parking Garage,2026-11-11,none,
+way/767912677,Textron Building Garage,2026-11-11,none,
+way/1280756598,Cedar Street Parking Deck,2026-11-11,none,
+way/54626014,330 Wells Garage,2026-11-11,found,
+way/160530763,Elm Avenue Parking Facility,2026-11-11,none,
+way/496445805,Baptist Memorial Hospital for Women Garage,2026-11-11,none,
+relation/4731432,Speed Art Museum Parking Garage,2026-11-11,none,
+way/268207607,VCU Henry Street Parking Deck - East,2026-11-11,found,
+way/225640548,295 Chipeta Garage,2026-11-11,none,
+way/328669357,Harrah's New Orleans Parking Garage,2026-11-11,ambiguous,"Only weak non-operator pages give 6'11""."
+way/208959836,Shakespeare Parking Garage,2026-11-11,none,
+way/1069645764,Delaware North Building Parking Garage,2026-11-11,none,generic name; not searched
+way/429132237,Parking Deck,2026-11-11,none,generic name; not searched
+way/108352125,High Falls Parking Garage,2026-11-11,found,
+way/727428050,Honors Village Garage,2026-11-11,none,
+way/107780290,Secure Parking USA,2026-11-11,none,generic name; not searched
+way/315970237,Energy Plaza Parking Structure,2026-11-11,none,generic name; not searched
+way/205640236,Park Square Parking Garage,2026-11-11,ambiguous,"Only a Parkopedia 6'8"" tied to the disabled section of Two Park Square; could not confirm same garage."
+way/229832328,Lincoln Avenue Garage,2026-11-11,found,
+node/1859366370,Union South Garage,2026-11-11,found,
+node/12480886213,Centerpark East 34th Street Parking Garage,2026-11-11,found,
+way/158914424,Eastside Parking Structure,2026-11-11,none,
+way/442771900,Medical Campus Parking Garage B,2026-11-11,found,
+way/1110917756,333 N. Houston St. - Holocaust and Human Rights Museum Garage,2026-11-11,ambiguous,Listings for the museum garage use 301 N Houston; no height for this address.
+way/426617798,Texas Medical Center Garage 3,2026-11-11,none,
+way/479125840,North Garage,2026-11-11,none,
+way/296462172,Kimmel Center Parking Garage,2026-11-11,ambiguous,"Kimmel Center garage listed at 300 S Broad (7'2""); address and space count do not match this entry."
+way/280459611,North Deck,2026-11-11,none,generic name; not searched
+way/311357059,Garage 3,2026-11-11,none,
+way/325264379,Main Street Public Parking Garage,2026-11-11,none,
+node/11972347573,84 Athenaeum St Garage,2026-11-11,found,
+way/979658132,WesternU Parking structure,2026-11-11,ambiguous,University FAQ (staging site) gives 7' for floors 2-6 only; ground floors unknown.
+node/234653692,Genetics Underground Garage,2026-11-11,none,
+way/69021559,DMC Beaubien Deck,2026-11-11,none,
