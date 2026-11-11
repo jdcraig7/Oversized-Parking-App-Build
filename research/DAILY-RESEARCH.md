@@ -64,3 +64,4 @@ Stop after 50 garages or about an hour, whichever comes first.
 | 2026-11-11 (2nd full 50) | 50 | 17 | One search each, run directly. Named campus and airport garages gave a much better yield (about a third). |
 | 2026-11-11 (3rd full 50) | 50 | 12 | One search each, run directly; two heights taken from pages found in earlier runs. |
 | 2026-11-11 (4th full 50) | 50 | 12 | One search each, run directly; two heights reused from pages found in earlier runs. |
+| 2026-11-11 (5th full 50) | 50 | 12 | One search each, run directly; Main Gate Garage reused from the University of Arizona page found earlier. |
