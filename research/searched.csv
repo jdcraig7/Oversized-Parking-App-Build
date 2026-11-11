@@ -83,3 +83,53 @@ way/867891404,Grapevine Main Street Parking Garage,2026-11-11,none,
 way/956530357,South Campus Garage - SJSU,2026-11-11,none,
 way/127683764,Cleveland Clinic Parking (P1),2026-11-11,none,
 way/955947794,West End Garage,2026-11-11,none,"Hamilton County West End Garage (1530 John St), SP+; no height found."
+relation/5933604,Express Deck 2,2026-11-11,found,
+way/37060076,500 R Street Garage,2026-11-11,found,
+way/892835189,North Springs Park & Ride,2026-11-11,found,
+way/227586171,US36 & Sheridan Station Park-n-Ride,2026-11-11,ambiguous,"Parking.com lists US36 & Sheridan at 7'0"" but at 5025 W 88th Ave (RTD: 88th Pl); not confirmed."
+way/137483347,(no name),2026-11-11,ambiguous,"Parkopedia lists The Village at Topanga at 8'2"" under disabled spots only; unclear which garage."
+way/1346984424,(no name),2026-11-11,none,
+way/554788763,Brackenridge Park Parking Garage,2026-11-11,none,Nearby garage listings only.
+way/249653292,Fourth Avenue Parking Garage,2026-11-11,none,
+way/184191161,Courthouse Garage,2026-11-11,none,
+way/42482179,Maple Grove Transit Station,2026-11-11,none,Surface lot per Metro Transit.
+way/259004560,Calvert Street Parking Garage,2026-11-11,none,
+node/4756934296,Horseshoe St. Louis Parking Garage,2026-11-11,none,
+way/172583717,M Resort Self Parking,2026-11-11,none,
+relation/7313310,(no name),2026-11-11,none,MacArthur Square (841 N James Lovell St); no height found.
+way/142223186,Main Street Parking Garage,2026-11-11,none,
+way/208608974,Hotel Monteleone Parking Garage,2026-11-11,none,
+way/107780286,Fourth Street Parking,2026-11-11,none,
+way/1107034997,17th & Chicago Garage,2026-11-11,none,Described as open-air lot; no height found.
+way/28997603,Lower Hearst Structure,2026-11-11,none,
+way/75845302,New Rochelle Transit Center,2026-11-11,none,
+way/69021532,3000 Trumbull St Garage,2026-11-11,none,
+way/739118317,South Bellevue Garage,2026-11-11,none,
+way/153040324,30th Avenue Park & Ride,2026-11-11,none,
+way/25679807,Twiggs Street Parking Garage,2026-11-11,none,"City page shows 6'8"" for 201 S Ashley, not Twiggs."
+way/989774306,Scholars Parking Structure,2026-11-11,none,
+way/497213031,MBTA Wonderland Garage,2026-11-11,none,
+way/238184141,Parking Garage,2026-11-11,none,
+way/702692435,Quik Park,2026-11-11,none,Address could not be matched.
+way/429126286,Grandview Parking Deck,2026-11-11,none,
+way/415917412,Double Tree Parking Garage,2026-11-11,none,Parkopedia says no height restrictions for DoubleTree Fresno lot; not trusted.
+node/10656389358,Albuquerque Plaza Office & Hotel,2026-11-11,none,
+way/502786160,Loma Linda VA Employee Parking Garage,2026-11-11,none,
+way/892759673,CVHCS Parking Garage,2026-11-11,none,
+node/3257499698,Airport Plaza Car Park,2026-11-11,none,
+relation/17940111,(no name),2026-11-11,none,Snowbird Entry 1 is a surface lot.
+way/208550078,(no name),2026-11-11,none,"Monteleone-linked garage, 625 Bienville; no height found."
+way/545042503,(no name),2026-11-11,none,
+relation/9058850,(no name),2026-11-11,none,
+relation/64875,(no name),2026-11-11,none,
+way/564140823,Second Avenue Parking Garage,2026-11-11,none,"Search found 205 2nd Ave N (downtown), not this location."
+way/613119530,PVIC Parking Garage,2026-11-11,none,
+way/426234120,(no name),2026-11-11,none,
+way/659615783,(no name),2026-11-11,none,
+way/468941123,(no name),2026-11-11,none,
+way/715696467,(no name),2026-11-11,none,
+way/118549070,(no name),2026-11-11,none,
+way/138677223,Parking Terrace B-1,2026-11-11,none,
+way/217377317,(no name),2026-11-11,none,
+way/429123245,Parking Deck,2026-11-11,none,
+way/341313469,Cityway North Car Park,2026-11-11,none,"CityWay South is 8'2"" per Parkopedia, not North."
