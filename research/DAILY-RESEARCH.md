@@ -72,3 +72,4 @@ Stop after 50 garages or about an hour, whichever comes first.
 | 2026-11-12 (10th run) | 29 | 6 | One search each, run directly. 21 queue entries left unsearched and not recorded, so they requeue. |
 | 2026-11-12 (11th run) | 28 | 6 | One search each, run directly. 22 queue entries left unsearched and not recorded, so they requeue. |
 | 2026-11-12 (12th run) | 24 | 8 | One search each, run directly. 26 queue entries left unsearched and not recorded, so they requeue. |
+| 2026-11-12 (13th run) | 24 | 5 | One search each, run directly. 26 queue entries left unsearched and not recorded, so they requeue (the head of the queue is now mostly generic names that keep returning). |

@@ -232,3 +232,8 @@ way/331194236,Tower Bridge Garage,"6'9""",,,,,listing,https://res.cloudinary.com
 node/13543350050,Smithfield Liberty Garage,"6'0""",,,,,operator,https://www.pittsburghparking.com/Facilities/Smithfield-Liberty-Garage,2026-11-12,Pittsburgh Parking Authority garage list and facility rates sheet list 6'.
 way/31963306,Manor Garage,"6'11""",,,,,listing,https://www.parkme.com/lot/82607/manor-garage-austin-tx,2026-11-12,"ParkMe listing (UT Austin), single source."
 way/544397719,Kensington Garage,"6'6""",,,,,listing,https://en.parkopedia.com/parking/garage/kensington_garage/37240/nashville/,2026-11-12,Parkopedia listing for 201 25th Ave S. A separate Kensington High Clearance garage exists.
+relation/5340943,SAMMC Parking Garage,"7'0""",,,,,operator,https://www.army.mil/article/54183/BAMC_parking_complex_opens_in_phases_starting_April_4,2026-11-12,"2011 Army article: interior ceiling 7 ft, except an 8'2"" path to van spaces. Figure is old."
+way/587950326,100 East Wisconsin Garage,"6'6""",,,,,listing,https://parkwhiz.ca/p/milwaukee-parking/100-e-wisconsin-ave,2026-11-12,"ParkWhiz listing (Power Parking), single source."
+way/175146005,University Avenue Ramp,"7'1""",,,,,operator,https://uwbadgers.com/sports/2015/8/21/GEN_20140101245,2026-11-12,UW Athletics event parking table (2015) lists Lot 20 University Avenue Ramp; may be dated.
+node/12500817269,Centerpark West 17th Street Parking Garage,"8'0""",,,,,listing,https://parkwhiz.ca/p/new-york-parking/151-w-17th-st,2026-11-12,"ParkWhiz listing, single source."
+way/41169864,Gambrell Parking Deck,"6'8""",,,,,listing,https://parking.com/emory-university---gambrell-deck,2026-11-12,"Parking.com listing, single source; address differs slightly between sources."
