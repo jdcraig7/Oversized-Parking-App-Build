@@ -23,3 +23,4 @@
 ## 2026-11-12
 - Alaska/Hawaii Overpass fetch (daily check): succeeded, 7,224 places (one mirror returned 429, another answered).
 - Research runs 7-9 pushed (heights found: 12, 11, 7). Run 8 only searched 35 of its 50 entries (documented in its log row); run 9 left unsearched entries out of searched.csv so they requeue. Nothing needed from the owner.
+- 2026-11-12: Research queue note: the head of the research queue keeps returning ~25 unnamed/generic garages (e.g. "Parking Deck", "Garage A") that I skip because they never yield. Yield is falling (5 to 8 heights per 24-30 garages). Suggestion for owner: have scripts/research-next.ts skip garages with no operator/name beyond a generic word, or accept a lower daily target. I did not change the script.
