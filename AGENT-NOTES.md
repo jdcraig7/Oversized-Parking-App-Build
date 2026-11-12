@@ -19,3 +19,7 @@
 - Task 5 (Alaska/Hawaii): the retry at 09:08 UTC succeeded: `/tmp/ak-hi.geojsonseq` written, 7,224 places. The Monday refresh includes US-AK/US-HI automatically. (The earlier attempt the same day failed with Overpass HTTP 406/429; the mirrors are intermittent.)
 - Research runs on 2026-11-11: 8, 50, 50, 50, 50 garages searched (2, 17, 12, 12 heights in the last four). `research/garages.csv` has about 160 rows. All pushed. The queue still has about 5,400 entries; most unnamed ones are not findable by web search.
 - The main session asked for full 50-garage runs; I did them directly with parallel searches rather than subagents.
+
+## 2026-11-12
+- Alaska/Hawaii Overpass fetch (daily check): succeeded, 7,224 places (one mirror returned 429, another answered).
+- Research runs 7-9 pushed (heights found: 12, 11, 7). Run 8 only searched 35 of its 50 entries (documented in its log row); run 9 left unsearched entries out of searched.csv so they requeue. Nothing needed from the owner.
