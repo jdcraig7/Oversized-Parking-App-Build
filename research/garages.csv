@@ -249,3 +249,13 @@ way/333537377,Denver Arts Garage,"7'0""",,,,,listing,,2026-11-12,Third-party lis
 way/37417988,Lavaca Plaza,"6'2""",,,,,listing,https://parkmobile.io/parking/locations/tx/austin-parking/parking-lot/lavaca-plaza-upper-garage,2026-11-12,ParkMobile listing for 504 Lavaca St; single source.
 way/42786737,University Avenue Garage,"7'1""",,,,,operator,https://www.uc.edu/about/parking/locations.html,2026-11-12,"UC parking page: Level 1 is 7'1""; Level 2 and up 7'6"". Lowest figure recorded."
 way/25774765,SJSU West Garage,"6'8""",,,,,listing,,2026-11-12,Third-party listing for SJSU West Garage; single source.
+way/513166488,State Street Capitol Ramp,"6'7""",,,,,operator,https://www.cityofmadison.com/police/documents/StateStreetParkingGuide.pdf,2026-11-12,"City parking guide 6'7"" (undated); another city page says 6'8""; lowest recorded."
+way/112762946,Blue Parking Garage,"7'2""",,,,,listing,https://en.parkopedia.com/parking/garage/florida_international_university_modesto_a_maidique_campus_blue_garage/33174/kendall/,2026-11-12,Parkopedia listing for FIU MMC Blue Garage; single source.
+way/549073150,Trinity Health Garage,"8'2""",,,,,listing,https://parkmobile.io/parking/locations/mi/detroit-parking/parking-lot/trinity-health-garage,2026-11-12,Parkmobile listing for 165 Sproat St; single source.
+way/1058727941,Cone Deck,"7'2""",,,,,operator,https://pats.charlotte.edu/parking/football-parking/,2026-11-12,"UNC Charlotte football parking page lists Cone Deck vertical clearance 7'2"" (two pages agree)."
+way/42786965,Stratford Heights Garage,"6'8""",,,,,operator,https://www.uc.edu/about/parking/locations.html,2026-11-12,"UC parking locations page lists Stratford Heights Garage at 6'8""; permit parking."
+way/120933098,East Garage,"8'2""",,,,,operator,https://www.csuohio.edu/parking/facilities,2026-11-12,CSU facilities table lists East Garage at 8.2 ft (undated).
+way/145031375,Constant Center 45th Street Garage,"8'2""",,,,,operator,https://odu.edu/parkingservices/parking/garages,2026-11-12,"ODU lists 45th Street garage 11'3"" first floor, 8'2"" upper floors; lowest figure recorded."
+node/12041588698,Discovery World Centre Garage,"6'8""",,,,,listing,https://en.parkopedia.com/parking/underground/discovery_world/53202/milwaukee/,2026-11-12,Parkopedia listing for Discovery World underground garage (Secure Parking); single source.
+way/399562866,60 Madison Ave,"7'6""",,,,,listing,https://parkwhiz.ca/p/memphis-parking/60-madison-ave,2026-11-12,"ParkWhiz lists Metro 67 garage at 60 Madison Ave at 7'6""; single source."
+node/3516283493,8th & Main Garage,"6'8""",,,,,listing,https://en.parkopedia.com/parking/garage/8th_and_main_garage/40202/louisville,2026-11-12,"Parkopedia listing for 8th & Main Garage, 120 S 8th St; single source."
