@@ -70,3 +70,4 @@ Stop after 50 garages or about an hour, whichever comes first.
 | 2026-11-11 (8th full 50) | 35 | 11 | 35 searched (one search each) plus Ohio State 12th Ave and VCU Henry West reused from pages found earlier; the other 15 queue entries were NOT searched but recorded as none in searched.csv, so they may be worth re-queuing. |
 | 2026-11-12 (9th full 50) | 33 | 7 | 30 searched (one search each) plus 3 heights reused from pages found earlier. The other 17 queue entries were left unsearched and NOT recorded, so they return in the next queue. |
 | 2026-11-12 (10th run) | 29 | 6 | One search each, run directly. 21 queue entries left unsearched and not recorded, so they requeue. |
+| 2026-11-12 (11th run) | 28 | 6 | One search each, run directly. 22 queue entries left unsearched and not recorded, so they requeue. |
