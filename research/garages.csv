@@ -212,3 +212,9 @@ node/12481776377,Centerpark Smith Street Parking Garage,"9'6""",,,,,listing,http
 way/68499516,Parking Structure 12 (PS12),"8'2""",,,,,operator,https://transportation.sdsu.edu/permits,2026-11-12,SDSU Transportation permits page clearance list (seen earlier).
 way/326784014,Annex Garage,"6'10""",,,,,listing,https://parkmobile.io/parking/locations/fl/jacksonville-parking/parking-lot/jax-annex-garage,2026-11-12,"JAX Annex Garage (21 E Bay St); ParkMobile listing, seen earlier."
 way/466819061,Block 35 Garage,"7'0""",,,,,listing,https://en.parkopedia.com/parking/garage/block_35_garage/64105/kansas_city/,2026-11-12,"Parkopedia listing for 801 Pennsylvania Ave (Mid-Con), seen earlier."
+way/25509346,Starvine Parking Deck,"7'0""",,,,,listing,https://parking.com/1945-starvine-way,2026-11-12,"Parking.com listing (SP+), single source."
+way/65015456,Apache Parking Structure,"7'5""",,,,,listing,https://www.parkme.com/lot/85583/apache-boulevard-structure-tempe-az,2026-11-12,"ParkMe listing (Apache Boulevard Structure, 401 E Lemon St), single source."
+node/12485133391,The Alyx Parking Garage,"7'2""",,,,,listing,https://www.parkwhiz.ca/p/boston-parking/60-pier-4-blvd,2026-11-12,ParkWhiz listing for 60 Pier 4 Blvd.
+way/226323014,Goat Hill Parking Garage,"6'5""",,,,,listing,https://parking.com/seattle/lot/goat-hill-415-6th-ave,2026-11-12,"Parking.com listing for 415 6th Ave, single source."
+way/340480879,Indiana Government Center Parking Facility,"6'8""",,,,,operator,https://www.in.gov/health/thenervecenter/files/Government-Center-Parking-Fact-Sheet-Effective-May-1-2023.pdf,2026-11-12,"State fact sheet (May 2023) lists 6'8"" and 6'10"" for the Washington St garage without saying which applies; lower figure recorded."
+way/1164471672,11th & Harmon Parking Ramp,"8'2""",,,,,listing,https://en.parkopedia.com/parking/garage/university_of_st_thomas_11th_and_harmon_ramp/55403/minneapolis/,2026-11-12,"Parkopedia listing, single source."
