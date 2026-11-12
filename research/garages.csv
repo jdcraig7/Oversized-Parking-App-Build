@@ -237,3 +237,7 @@ way/587950326,100 East Wisconsin Garage,"6'6""",,,,,listing,https://parkwhiz.ca/
 way/175146005,University Avenue Ramp,"7'1""",,,,,operator,https://uwbadgers.com/sports/2015/8/21/GEN_20140101245,2026-11-12,UW Athletics event parking table (2015) lists Lot 20 University Avenue Ramp; may be dated.
 node/12500817269,Centerpark West 17th Street Parking Garage,"8'0""",,,,,listing,https://parkwhiz.ca/p/new-york-parking/151-w-17th-st,2026-11-12,"ParkWhiz listing, single source."
 way/41169864,Gambrell Parking Deck,"6'8""",,,,,listing,https://parking.com/emory-university---gambrell-deck,2026-11-12,"Parking.com listing, single source; address differs slightly between sources."
+way/232080295,Olympic Garage,"6'5""",,,,,listing,https://en.parkopedia.com/parking/garage/olympic_garage/98101/seattle/,2026-11-12,"Parkopedia and ParkWhiz agree on 6'5"" (Fairmont Olympic Garage, Ace Parking)."
+way/29521160,First Street Garage,"7'3""",,,,,operator,https://www.cambridgema.gov/IWantTo/ParkACarInCambridge,2026-11-12,"City of Cambridge parking page lists 7 ft 3 in; Parkopedia says 7'6"". Lower figure recorded."
+way/27574237,East Campus Garage,"6'8""",,,,,listing,https://support.parkmobile.io/hc/en-us/articles/36854434843163-Carnegie-Mellon-University-Campus-Events-Pittsburgh-PA,2026-11-12,"ParkMobile CMU event page lists 6'8"" for East Campus Garage."
+way/364706624,Broad Ripple Garage,"8'2""",,,,,listing,https://parkmobile.io/parking/locations/in/indianapolis-parking/parking-lot/broad-ripple-garage,2026-11-12,"Third-party listing (Denison), single source."
