@@ -77,3 +77,4 @@ Stop after 50 garages or about an hour, whichever comes first.
 | 2026-11-12 (15th run, user asked to search everything) | 50 | 2 | All 50 searched, one search each (including the generic names previously skipped); low yield expected for these. |
 | 2026-11-12 (16th run) | 50 | 6 | All 50 searched, one search each. 1 operator source, 5 single-listing sources; 3 ambiguous. |
 | 2026-11-12 (17th run) | 50 | 10 | All 50 searched, one search each (6 re-run after rate-limit errors). 5 operator, 5 single-listing sources; 8 ambiguous. |
+| 2026-11-13 (18th run) | 50 | 8 | All 50 searched, one search each (1 re-run after a rate-limit error). 3 operator, 5 single-listing sources; 5 ambiguous. |
