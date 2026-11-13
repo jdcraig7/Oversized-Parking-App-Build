@@ -79,3 +79,4 @@ Stop after 50 garages or about an hour, whichever comes first.
 | 2026-11-12 (17th run) | 50 | 10 | All 50 searched, one search each (6 re-run after rate-limit errors). 5 operator, 5 single-listing sources; 8 ambiguous. |
 | 2026-11-13 (18th run) | 50 | 8 | All 50 searched, one search each (1 re-run after a rate-limit error). 3 operator, 5 single-listing sources; 5 ambiguous. |
 | 2026-11-13 (operator-wide pass, user-approved) | 11 | 9 | Not a scheduled run. Used University of Missouri and UT Knoxville clearance lists (6 + 3 garages); 2 UT garages ambiguous (older map only). UGA, UF, Yale, BART, UNMC, Colonial DC publish no usable per-garage list. |
+| 2026-11-13 (19th run) | 50 | 21 | All 50 searched, one search each (4 re-run after rate-limit errors). First run on the yield-ordered queue: 2 operator, 19 single-listing sources (17 are Centerpark/NYC-area aggregator listings); 2 ambiguous. |
