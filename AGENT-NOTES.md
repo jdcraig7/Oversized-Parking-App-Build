@@ -34,3 +34,7 @@
 - `scripts/research-next.ts` now orders unsearched garages by likely yield (`scripts/research-score.ts`; website, operator, institution, named). Measured over 838 searched garages: website 34% found a height, operator 25%, institution 24%, named 22%, unnamed/generic 9%. `--by-rank` restores the old queue.csv order. Still search and record every garage; only the order changed. Test added (`tests/research-score.test.ts`).
 - Operator-wide lists found for University of Missouri and UT Knoxville (9 garages recorded, 2 more ambiguous). No public per-garage list for UGA, UF, Yale, BART, UNMC, Colonial DC, so those stay per-garage searches.
 - Ideas for later (need owner): ask LAZ / SP+ / Centerpark for a clearance sheet; call-in or email requests would be drafted here for the owner to send.
+
+## 2026-11-13 (later) — Alaska/Hawaii fetch failed again
+- Second attempt after research run 19: all Overpass mirrors again returned 429 / fetch failed, exit 1. No new data. Will try again after the next run and keep the retries to about once per scheduled run. Nothing needed from the owner.
+- Research run 19 (first on the yield-ordered queue): 50 searched, 21 heights found (mostly NYC Centerpark garages via ParkWhiz/Parkmobile listings, which are single-source).
