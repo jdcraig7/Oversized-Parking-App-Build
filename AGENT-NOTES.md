@@ -24,3 +24,8 @@
 - Alaska/Hawaii Overpass fetch (daily check): succeeded, 7,224 places (one mirror returned 429, another answered).
 - Research runs 7-9 pushed (heights found: 12, 11, 7). Run 8 only searched 35 of its 50 entries (documented in its log row); run 9 left unsearched entries out of searched.csv so they requeue. Nothing needed from the owner.
 - 2026-11-12: Correction to my earlier queue note: the queue stall was caused by me skipping generic-name garages and stopping runs early, not by the script. Owner confirmed: search every garage in every run (one search each, record each in searched.csv). Doing that from now on; no script change needed.
+
+## 2026-11-13 — Alaska/Hawaii fetch FAILED (retry pending)
+- Ran the daily `fetch-overpass-states.ts ... US-AK US-HI`; every Overpass mirror returned HTTP 429 or a fetch error, exit code 1. No new data; the 2026-11-12 output is unchanged.
+- Will retry on the next scheduled run and note the result here. Nothing needed from the owner.
+- Research run 18 (2026-11-13): 50 garages searched, 8 heights found, pushed.
