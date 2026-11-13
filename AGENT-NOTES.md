@@ -38,3 +38,7 @@
 ## 2026-11-13 (later) — Alaska/Hawaii fetch failed again
 - Second attempt after research run 19: all Overpass mirrors again returned 429 / fetch failed, exit 1. No new data. Will try again after the next run and keep the retries to about once per scheduled run. Nothing needed from the owner.
 - Research run 19 (first on the yield-ordered queue): 50 searched, 21 heights found (mostly NYC Centerpark garages via ParkWhiz/Parkmobile listings, which are single-source).
+
+## 2026-11-13 (run 20) — AK/HI fetch failed a third time
+- Third attempt today (after runs 18, 19, 20): all Overpass mirrors again 429 / fetch failed, exit 1. The 2026-11-12 output is still the latest. The mirrors look rate-limited from this network, so I'll keep to one attempt per day and note it. Nothing needed from the owner unless this goes on for several days (then the daily AK/HI fetch may need to run from another network).
+- Research run 20 (yield-ordered queue): 50 searched, 14 heights found.
