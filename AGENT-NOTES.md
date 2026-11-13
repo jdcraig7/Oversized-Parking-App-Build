@@ -29,3 +29,8 @@
 - Ran the daily `fetch-overpass-states.ts ... US-AK US-HI`; every Overpass mirror returned HTTP 429 or a fetch error, exit code 1. No new data; the 2026-11-12 output is unchanged.
 - Will retry on the next scheduled run and note the result here. Nothing needed from the owner.
 - Research run 18 (2026-11-13): 50 garages searched, 8 heights found, pushed.
+
+## 2026-11-13 — Queue reordering + operator-wide hunt (owner approved "1 and 2")
+- `scripts/research-next.ts` now orders unsearched garages by likely yield (`scripts/research-score.ts`; website, operator, institution, named). Measured over 838 searched garages: website 34% found a height, operator 25%, institution 24%, named 22%, unnamed/generic 9%. `--by-rank` restores the old queue.csv order. Still search and record every garage; only the order changed. Test added (`tests/research-score.test.ts`).
+- Operator-wide lists found for University of Missouri and UT Knoxville (9 garages recorded, 2 more ambiguous). No public per-garage list for UGA, UF, Yale, BART, UNMC, Colonial DC, so those stay per-garage searches.
+- Ideas for later (need owner): ask LAZ / SP+ / Centerpark for a clearance sheet; call-in or email requests would be drafted here for the owner to send.
