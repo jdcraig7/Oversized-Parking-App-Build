@@ -42,3 +42,6 @@
 ## 2026-11-13 (run 20) — AK/HI fetch failed a third time
 - Third attempt today (after runs 18, 19, 20): all Overpass mirrors again 429 / fetch failed, exit 1. The 2026-11-12 output is still the latest. The mirrors look rate-limited from this network, so I'll keep to one attempt per day and note it. Nothing needed from the owner unless this goes on for several days (then the daily AK/HI fetch may need to run from another network).
 - Research run 20 (yield-ordered queue): 50 searched, 14 heights found.
+
+## 2026-11-14 — AK/HI fetch failed again
+- One attempt today (run 26 start): `fetch failed` on the Overpass mirrors, exit 1. Output from 2026-11-12 is still the latest. Second day of failures; owner action only if it continues several more days (may need to run from another network).
